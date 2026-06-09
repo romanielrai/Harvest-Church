@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Harvest Church — App Launcher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0b0c10;
+      --card-bg: rgba(22, 27, 34, 0.7);
+      --card-border: rgba(212, 175, 55, 0.2);
+      --text-main: #f0f3f5;
+      --text-muted: #8b949e;
+      --gold: #d4af37;
+      --gold-hover: #f3e5ab;
+      --green: #2ea44f;
+      --red: #da3637;
+      --glow: rgba(212, 175, 55, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-color);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(212, 175, 55, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(31, 111, 235, 0.05) 0px, transparent 50%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 650px;
+      backdrop-filter: blur(16px);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 50px var(--glow);
+      text-align: center;
+      position: relative;
+      animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .logo-container {
+      margin-bottom: 24px;
+    }
+
+    .church-emblem {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+      display: inline-block;
+      position: relative;
+    }
+
+    .church-emblem::after {
+      content: '';
+      display: block;
+      width: 60px;
+      height: 2px;
+      background: var(--gold);
+      margin: 8px auto 0;
+      border-radius: 2px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-main);
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 30px;
+    }
+
+    /* Status Indicator */
+    .status-panel {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 35px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .status-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--text-muted);
+      position: relative;
+    }
+
+    .status-dot.online {
+      background-color: var(--green);
+      box-shadow: 0 0 12px var(--green);
+    }
+
+    .status-dot.offline {
+      background-color: var(--red);
+      box-shadow: 0 0 12px var(--red);
+    }
+
+    .status-dot.checking {
+      background-color: var(--gold);
+      box-shadow: 0 0 12px var(--gold);
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
+    .status-text-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .status-text-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Action Buttons */
+    .launch-options {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold) 0%, #b89326 100%);
+      color: #000;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--gold-hover) 0%, var(--gold) 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(212, 175, 55, 0.4);
+      color: var(--gold);
+      transform: translateY(-2px);
+    }
+
+    .btn.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* Redirect Controls */
+    .redirect-opt {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 25px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .redirect-opt input {
+      accent-color: var(--gold);
+      cursor: pointer;
+    }
+
+    /* Offline Guide Box */
+    .guide-box {
+      background: rgba(218, 54, 55, 0.05);
+      border: 1px dashed rgba(218, 54, 55, 0.25);
+      border-radius: 14px;
+      padding: 24px;
+      text-align: left;
+      margin-top: 10px;
+      display: none;
+      animation: slideDown 0.4s ease forwards;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .guide-title {
+      font-weight: 600;
+      color: #ff7b72;
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .guide-list {
+      list-style-position: inside;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .guide-list li {
+      margin-bottom: 8px;
+    }
+
+    .code-span {
+      font-family: monospace;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #ff9e76;
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="logo-container">
+      <div class="church-emblem">Harvest Church</div>
+    </div>
+    
+    <h1>Next.js Platform Launcher</h1>
+    <p class="subtitle">VS Code Live Server Redirect & Developer Portal</p>
+
+    <!-- Server Status Indicator -->
+    <div class="status-panel">
+      <div class="status-info">
+        <div id="statusDot" class="status-dot checking"></div>
+        <div>
+          <div id="statusTitle" class="status-text-title">Checking Next.js server...</div>
+          <div id="statusPort" class="status-text-desc">Querying http://localhost:3000</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="checkStatus()" style="width: auto; padding: 8px 16px; font-size: 0.85rem;">
+        Refresh Status
+      </button>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="launch-options">
+      <a id="btnMain" href="http://localhost:3000" target="_blank" class="btn btn-primary disabled">
+        🚀 Open Church Website
+      </a>
+      <a id="btnAdmin" href="http://localhost:3000/admin" target="_blank" class="btn btn-secondary disabled">
+        🛡️ Open Admin Dashboard
+      </a>
+    </div>
+
+    <!-- Auto-Redirect Option -->
+    <div class="redirect-opt">
+      <input type="checkbox" id="autoRedirect" checked>
+      <label for="autoRedirect">Automatically redirect when server is running</label>
+    </div>
+
+    <!-- Offline Instruction Guide -->
+    <div id="offlineGuide" class="guide-box">
+      <div class="guide-title">
+        ⚠️ Next.js Developer Server is Offline
+      </div>
+      <ol class="guide-list">
+        <li><strong>Double-click</strong> the <span class="code-span">start-server.bat</span> file in your project folder. This will automatically prepare your database and launch the Next.js server.</li>
+        <li><em>Or</em>, open the terminal in VS Code (<span class="code-span">Ctrl + `</span>) and run: <br>
+            <span class="code-span" style="display: inline-block; margin-top: 4px;">npm run dev</span>
+        </li>
+        <li>Once the terminal says <span class="code-span">Ready in ...</span>, return here or go directly to <a href="http://localhost:3000" target="_blank" style="color: var(--gold);">http://localhost:3000</a>.</li>
+      </ol>
+    </div>
+  </div>
+
+  <footer>
+    Harvest Church Portal &bull; Designed by Antigravity
+  </footer>
+
+  <script>
+    // Load preference from localStorage
+    const redirectCheckbox = document.getElementById('autoRedirect');
+    if (localStorage.getItem('hc_auto_redirect') === 'false') {
+      redirectCheckbox.checked = false;
+    }
+
+    redirectCheckbox.addEventListener('change', (e) => {
+      localStorage.setItem('hc_auto_redirect', e.target.checked);
+    });
+
+    let redirectTimeout = null;
+
+    async function checkStatus() {
+      const dot = document.getElementById('statusDot');
+      const title = document.getElementById('statusTitle');
+      const portDesc = document.getElementById('statusPort');
+      const btnMain = document.getElementById('btnMain');
+      const btnAdmin = document.getElementById('btnAdmin');
+      const offlineGuide = document.getElementById('offlineGuide');
+
+      // Set to checking state
+      dot.className = 'status-dot checking';
+      title.innerText = 'Checking Next.js server...';
+      portDesc.innerText = 'Querying http://localhost:3000';
+
+      if (redirectTimeout) {
+        clearTimeout(redirectTimeout);
+      }
+
+      try {
+        // Attempt a simple head/fetch request with no-cors mode to localhost:3000
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        
+        await fetch('http://localhost:3000', { 
+          mode: 'no-cors',
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+
+        // Server is online!
+        dot.className = 'status-dot online';
+        title.innerText = 'Next.js Server: ONLINE';
+        portDesc.innerText = 'Running on port 3000';
+        
+        btnMain.classList.remove('disabled');
+        btnAdmin.classList.remove('disabled');
+        offlineGuide.style.display = 'none';
+
+        // Perform auto-redirect if option is enabled
+        if (redirectCheckbox.checked) {
+          title.innerText = 'Next.js Server: ONLINE (Redirecting...)';
+          redirectTimeout = setTimeout(() => {
+            window.location.href = 'http://localhost:3000';
+          }, 1500);
+        }
+      } catch (err) {
+        // Server is offline!
+        dot.className = 'status-dot offline';
+        title.innerText = 'Next.js Server: OFFLINE';
+        portDesc.innerText = 'Application server is not running';
+        
+        btnMain.classList.add('disabled');
+        btnAdmin.classList.add('disabled');
+        offlineGuide.style.display = 'block';
+      }
+    }
+
+    // Run check on page load
+    window.addEventListener('DOMContentLoaded', checkStatus);
+  </script>
+</body>
+</html>
