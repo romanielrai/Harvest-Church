@@ -1,0 +1,291 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  password     String
+  role         String        @default("USER") // SUPER_ADMIN, MINISTRY_ADMIN, FINANCIAL_MANAGER, VOLUNTEER_COORDINATOR, PRAYER_TEAM_LEADER, SPONSORSHIP_MANAGER, CONTENT_EDITOR, EVENT_MANAGER, USER
+  image        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  sponsorships Sponsorship[]
+  volunteers   Volunteer[]
+}
+
+model Ministry {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  category    String // e.g. Gospel Outreach, Church Planting, Pastor Training, Leadership Development, Women's Ministry, Bible Story Training, Baptism Ministry, Community Relief, Children's Ministry, Youth Ministry
+  coverImage  String
+  description String
+  gallery     String? // JSON array of image URLs
+  videos      String? // JSON array of video URLs
+  testimonies String? // JSON array of testimonials
+  reports     String? // JSON array of report objects
+  stats       String? // JSON object e.g., {"members": 120, "pastors": 4}
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Project {
+  id            String   @id @default(uuid())
+  title         String
+  slug          String   @unique
+  description   String
+  budget        Float
+  progress      Float    @default(0.0) // Percentage
+  beneficiaries Int      @default(0)
+  status        String   @default("ONGOING") // ONGOING, COMPLETED, UPCOMING
+  coverImage    String
+  gallery       String? // JSON array of photo URLs
+  reports       String? // JSON array of report URLs/names
+  documents     String? // JSON array of document references
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Event {
+  id            String              @id @default(uuid())
+  title         String
+  slug          String              @unique
+  description   String
+  date          DateTime
+  location      String
+  category      String
+  image         String
+  active        Boolean             @default(true)
+  registrations EventRegistration[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+}
+
+model EventRegistration {
+  id        String   @id @default(uuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  phone     String
+  status    String   @default("REGISTERED") // REGISTERED, ATTENDED, CANCELLED
+  checkedIn Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Donation {
+  id           String           @id @default(uuid())
+  donorName    String
+  donorEmail   String
+  donorPhone   String?
+  amount       Float
+  currency     String           @default("NPR")
+  type         String           @default("ONE_TIME") // ONE_TIME, MONTHLY, ANNUAL
+  status       String           @default("COMPLETED") // COMPLETED, PENDING, FAILED
+  purpose      String? // General, Gospel Outreach, Child Sponsorship, Church Planting, Community Relief, etc.
+  campaignName String?
+  date         DateTime         @default(now())
+  receipt      DonationReceipt?
+  createdAt    DateTime         @default(now())
+}
+
+model DonationReceipt {
+  id         String    @id @default(uuid())
+  receiptId  String    @unique // Unique receipt serial e.g., REC-2026-0001
+  donationId String    @unique
+  donation   Donation  @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  amount     Float
+  date       DateTime  @default(now())
+  donorName  String
+  donorEmail String
+  purpose    String
+  qrCode     String? // base64 or link
+  pdfUrl     String?
+  sentAt     DateTime?
+}
+
+model Volunteer {
+  id           String                @id @default(uuid())
+  userId       String?
+  user         User?                 @relation(fields: [userId], references: [id])
+  name         String
+  email        String
+  phone        String
+  skills       String // comma-separated
+  experience   String?
+  availability String // e.g., Weekends, Full Time, Evenings
+  interests    String // e.g., Gospel Outreach, Children's Ministry, Youth Ministry
+  status       String                @default("PENDING") // PENDING, APPROVED, REJECTED
+  assignments  VolunteerAssignment[]
+  createdAt    DateTime              @default(now())
+}
+
+model VolunteerAssignment {
+  id          String    @id @default(uuid())
+  volunteerId String
+  volunteer   Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  date        DateTime
+  hours       Float     @default(0.0)
+  completed   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+}
+
+model PrayerRequest {
+  id            String   @id @default(uuid())
+  requesterName String
+  requesterEmail String?
+  category      String // HEALING, FAMILY, FINANCE, EDUCATION, EMPLOYMENT, SPIRITUAL_GROWTH
+  content       String
+  isAnonymous   Boolean  @default(false)
+  isPrivate     Boolean  @default(false)
+  status        String   @default("PENDING") // PENDING, MODERATED, ANSWERED
+  answer        String?
+  createdAt     DateTime @default(now())
+}
+
+model Child {
+  id              String        @id @default(uuid())
+  name            String
+  age             Int
+  gender          String
+  school          String
+  familyInfo      String
+  sponsorshipNeed Float
+  progressReports String? // JSON array of report objects
+  photos          String? // JSON array of photo URLs
+  active          Boolean       @default(true)
+  sponsorships    Sponsorship[]
+  createdAt       DateTime      @default(now())
+}
+
+model Sponsorship {
+  id        String    @id @default(uuid())
+  userId    String // The Sponsor User
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  childId   String
+  child     Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+  amount    Float
+  status    String    @default("ACTIVE") // ACTIVE, CANCELLED
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model BlogPost {
+  id             String    @id @default(uuid())
+  title          String
+  slug           String    @unique
+  content        String
+  summary        String
+  coverImage     String
+  authorName     String
+  authorImage    String?
+  published      Boolean   @default(true)
+  categoryId     String
+  category       Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  tags           String? // Comma-separated
+  seoTitle       String?
+  seoDescription String?
+  comments       Comment[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Category {
+  id    String     @id @default(uuid())
+  name  String
+  slug  String     @unique
+  posts BlogPost[]
+}
+
+model Comment {
+  id          String   @id @default(uuid())
+  postId      String
+  post        BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorName  String
+  authorEmail String
+  content     String
+  approved    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model Testimonial {
+  id         String   @id @default(uuid())
+  authorName String
+  role       String
+  content    String
+  category   String // VOLUNTEER, COMMUNITY, SPONSOR
+  videoUrl   String?
+  avatarUrl  String?
+  createdAt  DateTime @default(now())
+}
+
+model Report {
+  id             String   @id @default(uuid())
+  title          String
+  type           String // MINISTRY, DONATION, EVENT, VOLUNTEER, SPONSORSHIP, PRAYER
+  format         String // PDF, EXCEL, CSV
+  dateRangeStart DateTime
+  dateRangeEnd   DateTime
+  fileUrl        String?
+  generatedBy    String
+  createdAt      DateTime @default(now())
+}
+
+model MediaFile {
+  id        String   @id @default(uuid())
+  url       String
+  name      String
+  type      String // IMAGE, VIDEO, DOCUMENT
+  folder    String   @default("general")
+  size      Int
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id            String   @id @default(uuid())
+  title         String
+  message       String
+  read          Boolean  @default(false)
+  recipientRole String? // If null, for everyone or all admins
+  createdAt     DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String
+  status    String   @default("UNREAD") // UNREAD, READ, REPLIED
+  createdAt DateTime @default(now())
+}
+
+model SystemSettings {
+  id              String   @id @default("singleton")
+  ministryName    String   @default("Harvest Ministries Nepal")
+  email           String   @default("info@harvestnepal.org")
+  phone           String   @default("+977 1 6610000")
+  address         String   @default("Bhaktapur, Nepal")
+  facebookUrl     String   @default("https://facebook.com")
+  twitterUrl      String   @default("https://twitter.com")
+  instagramUrl    String   @default("https://instagram.com")
+  whatsappNumber  String   @default("+9779800000000")
+  mission         String
+  vision          String
+  statementOfFaith String
+  history         String
+  logoUrl         String?
+  aboutText       String
+  updatedAt       DateTime @updatedAt
+}
