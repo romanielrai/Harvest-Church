@@ -82,15 +82,13 @@ export default function Navbar({ settings }: { settings?: any }) {
           <div className="hidden lg:flex items-center space-x-4">
             <ThemeToggle />
             
-            {session && (
-              <Link
-                href="/admin"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-muted text-foreground border border-border hover:bg-accent hover:scale-105 active:scale-95 transition-all"
-              >
-                <Shield className="w-3.5 h-3.5 text-primary" />
-                Admin Panel
-              </Link>
-            )}
+            <Link
+              href="/admin"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-muted text-foreground border border-border hover:bg-accent hover:scale-105 active:scale-95 transition-all"
+            >
+              <Shield className="w-3.5 h-3.5 text-primary" />
+              Admin
+            </Link>
 
             <Link
               href="/donate"
@@ -136,16 +134,14 @@ export default function Navbar({ settings }: { settings?: any }) {
             
             <div className="h-[1px] bg-border my-3" />
 
-            {session && (
-              <Link
-                href="/admin"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-2 px-3 py-2.5 rounded-md text-base font-semibold hover:bg-muted text-foreground"
-              >
-                <Shield className="w-4 h-4 text-primary" />
-                Admin Panel
-              </Link>
-            )}
+            <Link
+              href="/admin"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2 px-3 py-2.5 rounded-md text-base font-semibold hover:bg-muted text-foreground"
+            >
+              <Shield className="w-4 h-4 text-primary" />
+              Admin Panel
+            </Link>
 
             <Link
               href="/donate"
