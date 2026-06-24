@@ -49,11 +49,11 @@ export default async function ProjectsPage() {
 
   const displayProjects = projects.length > 0 ? projects.map(p => ({
     ...p,
-    coverImage: p.title.includes("Construction") 
+    coverImage: p.coverImage || (p.title.includes("Construction") 
       ? "/images/img_page3_7.jpeg" 
       : p.title.includes("Wells") 
         ? "/images/img_page4_5.jpeg" 
-        : "/images/img_page4_1.jpeg"
+        : "/images/img_page4_1.jpeg")
   })) : fallbackProjects;
 
   const getStatusColor = (status: string) => {

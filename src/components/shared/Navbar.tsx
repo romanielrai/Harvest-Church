@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Menu, X, Heart, Shield } from "lucide-react";
@@ -19,7 +20,7 @@ const links = [
   { name: "Contact", href: "/contact" },
 ];
 
-export default function Navbar() {
+export default function Navbar({ settings }: { settings?: any }) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const { data: session } = useSession();
@@ -34,14 +35,28 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo Brand area */}
-          <Link href="/" className="flex flex-col">
-            <span className="text-xl md:text-2xl font-bold font-serif text-primary tracking-tight leading-tight">
-              Harvest Ministries
-            </span>
-            <span className="text-xs font-semibold text-secondary uppercase tracking-widest leading-none">
-              Nepal
-            </span>
+          <Link href="/" className="flex items-center gap-2.5">
+            {settings?.logoUrl ? (
+              <div className="relative w-10 h-10">
+                <Image
+                  src={settings.logoUrl}
+                  alt={settings.ministryName || "Harvest Ministries Nepal"}
+                  fill
+                  sizes="40px"
+                  className="object-contain"
+                />
+              </div>
+            ) : null}
+            <div className="flex flex-col">
+              <span className="text-lg md:text-xl font-bold font-serif text-primary tracking-tight leading-tight">
+                {settings?.ministryName || "Harvest Ministries"}
+              </span>
+              <span className="text-xs font-semibold text-secondary uppercase tracking-widest leading-none">
+                Nepal
+              </span>
+            </div>
           </Link>
+
 
           {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center space-x-6">

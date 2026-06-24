@@ -37,9 +37,9 @@ export default async function BlogPage() {
 
   const displayPosts = posts.length > 0 ? posts.map(p => ({
     ...p,
-    coverImage: p.title.includes("Sindhupalchok") 
+    coverImage: p.coverImage || (p.title.includes("Sindhupalchok") 
       ? "/images/img_page2_1.jpeg" 
-      : "/images/img_page3_8.jpeg"
+      : "/images/img_page3_8.jpeg")
   })) : fallbackPosts;
 
   return (

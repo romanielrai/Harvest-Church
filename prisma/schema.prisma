@@ -272,20 +272,44 @@ model ContactMessage {
 }
 
 model SystemSettings {
-  id              String   @id @default("singleton")
-  ministryName    String   @default("Harvest Ministries Nepal")
-  email           String   @default("info@harvestnepal.org")
-  phone           String   @default("+977 1 6610000")
-  address         String   @default("Bhaktapur, Nepal")
-  facebookUrl     String   @default("https://facebook.com")
-  twitterUrl      String   @default("https://twitter.com")
-  instagramUrl    String   @default("https://instagram.com")
-  whatsappNumber  String   @default("+9779800000000")
-  mission         String
-  vision          String
+  id               String   @id @default("singleton")
+  ministryName     String   @default("Harvest Ministries Nepal")
+  email            String   @default("info@harvestnepal.org")
+  phone            String   @default("+977 1 6610000")
+  address          String   @default("Bhaktapur, Nepal")
+  facebookUrl      String   @default("https://facebook.com")
+  twitterUrl       String   @default("https://twitter.com")
+  instagramUrl     String   @default("https://instagram.com")
+  whatsappNumber   String   @default("+9779800000000")
+  mission          String
+  vision           String
   statementOfFaith String
-  history         String
-  logoUrl         String?
-  aboutText       String
-  updatedAt       DateTime @updatedAt
+  history          String
+  logoUrl          String?
+  aboutText        String
+  seoTitle         String   @default("Harvest Ministries Nepal")
+  seoDescription   String   @default("Spreading the Gospel & Planting Churches across Nepal")
+  seoKeywords      String   @default("church, nepal, ministry, gospel, relief")
+  homepageLayout   String   @default("hero,mission,story,stats,pastor,team,faq,badges,cta,newsletter")
+  updatedAt        DateTime @updatedAt
 }
+
+model Faq {
+  id        String   @id @default(uuid())
+  question  String
+  answer    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TeamMember {
+  id        String   @id @default(uuid())
+  name      String
+  role      String
+  bio       String
+  image     String   @default("/images/img_page1_2.jpeg")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

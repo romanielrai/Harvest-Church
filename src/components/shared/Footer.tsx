@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Mail, Phone, MapPin, Send } from "lucide-react";
 
 const Facebook = ({ className, ...props }: React.ComponentProps<"svg">) => (
@@ -54,7 +55,7 @@ const Instagram = ({ className, ...props }: React.ComponentProps<"svg">) => (
   </svg>
 );
 
-export default function Footer() {
+export default function Footer({ settings }: { settings?: any }) {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
@@ -73,25 +74,38 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Organization Brand Column */}
           <div className="space-y-4">
-            <Link href="/" className="flex flex-col">
-              <span className="text-xl font-bold font-serif text-white tracking-tight">
-                Harvest Ministries
-              </span>
-              <span className="text-xs font-semibold text-secondary uppercase tracking-widest leading-none">
-                Nepal
-              </span>
+            <Link href="/" className="flex items-center gap-2.5">
+              {settings?.logoUrl ? (
+                <div className="relative w-8 h-8">
+                  <Image
+                    src={settings.logoUrl}
+                    alt={settings.ministryName || "Harvest Ministries Nepal"}
+                    fill
+                    sizes="32px"
+                    className="object-contain"
+                  />
+                </div>
+              ) : null}
+              <div className="flex flex-col">
+                <span className="text-lg font-bold font-serif text-white tracking-tight">
+                  {settings?.ministryName || "Harvest Ministries"}
+                </span>
+                <span className="text-xs font-semibold text-secondary uppercase tracking-widest leading-none">
+                  Nepal
+                </span>
+              </div>
             </Link>
             <p className="text-sm text-slate-400 leading-relaxed">
-              Establishing indigenous fellowships, equipping rural pastors, and delivering critical community relief to mountain villages in Nepal since 2008.
+              {settings?.aboutText || "Establishing indigenous fellowships, equipping rural pastors, and delivering critical community relief to mountain villages in Nepal since 2008."}
             </p>
             <div className="flex space-x-4 pt-2">
-              <a href="https://facebook.com/harvestnepal" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors text-slate-400">
+              <a href={settings?.facebookUrl || "https://facebook.com/harvestnepal"} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors text-slate-400">
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="https://twitter.com/harvestnepal" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors text-slate-400">
+              <a href={settings?.twitterUrl || "https://twitter.com/harvestnepal"} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors text-slate-400">
                 <Twitter className="w-5 h-5" />
               </a>
-              <a href="https://instagram.com/harvestnepal" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors text-slate-400">
+              <a href={settings?.instagramUrl || "https://instagram.com/harvestnepal"} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors text-slate-400">
                 <Instagram className="w-5 h-5" />
               </a>
             </div>
@@ -135,15 +149,15 @@ export default function Footer() {
             <ul className="space-y-4 text-sm text-slate-400">
               <li className="flex items-start gap-2.5">
                 <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <span>Changu Road, Bhaktapur, Nepal</span>
+                <span>{settings?.address || "Changu Road, Bhaktapur, Nepal"}</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone className="w-5 h-5 text-primary shrink-0" />
-                <span>+977 1 6614488</span>
+                <span>{settings?.phone || "+977 1 6614488"}</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail className="w-5 h-5 text-primary shrink-0" />
-                <span>info@harvestnepal.org</span>
+                <span>{settings?.email || "info@harvestnepal.org"}</span>
               </li>
             </ul>
           </div>
@@ -183,7 +197,7 @@ export default function Footer() {
 
         {/* Bottom copyright and legal line */}
         <div className="border-t border-slate-900 mt-16 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} Harvest Ministries Nepal. All Rights Reserved. Registered NGO in Bhaktapur, Nepal.</p>
+          <p>© {new Date().getFullYear()} {settings?.ministryName || "Harvest Ministries Nepal"}. All Rights Reserved. Registered NGO in Bhaktapur, Nepal.</p>
           <div className="flex space-x-6">
             <Link href="/contact" className="hover:text-white transition-colors">
               Terms of Use
@@ -195,5 +209,6 @@ export default function Footer() {
         </div>
       </div>
     </footer>
+
   );
 }

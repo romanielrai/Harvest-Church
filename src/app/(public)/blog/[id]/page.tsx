@@ -37,9 +37,9 @@ export default async function BlogPostDetailPage(props: { params: Promise<{ id: 
 
   const displayPost = post ? {
     ...post,
-    coverImage: post.title.includes("Sindhupalchok") 
+    coverImage: post.coverImage || (post.title.includes("Sindhupalchok") 
       ? "/images/img_page2_1.jpeg" 
-      : "/images/img_page3_8.jpeg"
+      : "/images/img_page3_8.jpeg")
   } : fallbackPosts[params.id];
 
   if (!displayPost) {
