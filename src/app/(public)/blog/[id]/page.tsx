@@ -42,7 +42,7 @@ export default async function BlogPostDetailPage(props: { params: Promise<{ id: 
       : "/images/img_page3_8.jpeg")
   } : fallbackPosts[params.id];
 
-  if (!displayPost) {
+  if (!displayPost || (post && !post.published)) {
     notFound();
   }
 

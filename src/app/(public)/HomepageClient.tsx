@@ -34,6 +34,7 @@ interface HomepageClientProps {
   projects: any[];
   team: any[];
   faqs: any[];
+  testimonials?: any[];
 }
 
 export default function HomepageClient({ 
@@ -43,10 +44,20 @@ export default function HomepageClient({
   ministries, 
   projects, 
   team, 
-  faqs 
+  faqs,
+  testimonials = []
 }: HomepageClientProps) {
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+
+  // Homepage contact form states
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactSubject, setContactSubject] = useState("");
+  const [contactMessageText, setContactMessageText] = useState("");
+  const [contactStatus, setContactStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [contactErr, setContactErr] = useState("");
 
   // Newsletter form states
   const [firstName, setFirstName] = useState("");
@@ -88,10 +99,10 @@ export default function HomepageClient({
     }
   };
 
-  // Default section order parsed from database settings
+  // Default section order parsed from database settings (defaulting to the 9 visual builder sections)
   const layoutOrder = settings.homepageLayout 
     ? settings.homepageLayout.split(",") 
-    : ["hero", "mission", "story", "stats", "pastor", "team", "faq", "badges", "cta", "newsletter"];
+    : ["hero", "about", "services", "portfolio", "videoShowcase", "testimonials", "team", "faq", "contact"];
 
   // Render individual sections dynamically
   const renderSection = (sectionKey: string) => {
@@ -548,6 +559,327 @@ export default function HomepageClient({
                   {formMessage}
                 </div>
               )}
+            </div>
+          </section>
+        );
+
+
+      case "about":
+        return (
+          <React.Fragment key="about">
+            {renderSection("mission")}
+            {renderSection("story")}
+            {renderSection("stats")}
+          </React.Fragment>
+        );
+
+      case "services":
+        return (
+          <section key="services" className="py-24 bg-white dark:bg-slate-900 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+                <span className="text-xs uppercase tracking-widest text-primary font-bold">Ministries</span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white uppercase leading-tight animate-fade-in">
+                  Our Active Ministries & Services
+                </h2>
+                <p className="text-lg text-slate-500 dark:text-slate-400 font-light leading-relaxed">
+                  Serving communities, training pastors, and sharing Christ's love across Nepal.
+                </p>
+              </div>
+
+              {ministries.length === 0 ? (
+                <p className="text-sm text-slate-500 italic text-center">No ministries configured.</p>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {ministries.slice(0, 6).map((item) => (
+                    <div key={item.id} className="bg-slate-100 dark:bg-slate-950/40 border border-slate-205 dark:border-slate-800 rounded-3xl overflow-hidden hover:-translate-y-1.5 transition-transform duration-300 flex flex-col justify-between">
+                      <div className="relative aspect-video bg-slate-900">
+                        <Image src={item.coverImage || "/images/img_page1_1.jpeg"} alt={item.title} fill className="object-cover" />
+                        <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-slate-955/85 text-xs text-primary font-bold uppercase tracking-wider">
+                          {item.category}
+                        </span>
+                      </div>
+                      <div className="p-6 sm:p-8 flex-grow space-y-4">
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white font-serif">{item.title}</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">{item.description}</p>
+                      </div>
+                      <div className="p-6 sm:p-8 pt-0">
+                        <Link 
+                          href={`/ministries#${item.slug}`}
+                          className="text-xs uppercase tracking-wider font-bold text-primary hover:text-secondary transition-colors"
+                        >
+                          Read More & Reports →
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+
+      case "portfolio":
+        return (
+          <section key="portfolio" className="py-24 bg-slate-105 dark:bg-slate-955/20 px-4 sm:px-6 lg:px-8 border-y border-slate-200/50 dark:border-slate-800/40">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+                <span className="text-xs uppercase tracking-widest text-primary font-bold">Portfolio</span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white uppercase leading-tight">
+                  Relief & Building Projects
+                </h2>
+                <p className="text-lg text-slate-500 dark:text-slate-400 font-light leading-relaxed">
+                  Witnessing God's love through practical aid, water wells, and church buildings.
+                </p>
+              </div>
+
+              {projects.length === 0 ? (
+                <p className="text-sm text-slate-500 italic text-center">No projects configured.</p>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {projects.slice(0, 3).map((proj) => (
+                    <div key={proj.id} className="bg-white dark:bg-slate-950 rounded-3xl overflow-hidden shadow-md border border-slate-200/60 dark:border-slate-800 flex flex-col justify-between">
+                      <div className="relative aspect-video bg-slate-900">
+                        <Image src={proj.coverImage || "/images/img_page1_1.jpeg"} alt={proj.title} fill className="object-cover" />
+                        <span className="absolute top-4 right-4 px-3 py-1 rounded-full bg-slate-900/90 text-white font-bold text-[10px] uppercase tracking-wider">
+                          {proj.status}
+                        </span>
+                      </div>
+                      <div className="p-6 sm:p-8 space-y-4 flex-grow">
+                        <h3 className="text-lg font-bold text-slate-955 dark:text-white font-serif">{proj.title}</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">{proj.description}</p>
+                        
+                        <div className="space-y-1.5 pt-2">
+                          <div className="flex justify-between text-xs font-semibold text-slate-650 dark:text-slate-400">
+                            <span>Progress: {proj.progress}%</span>
+                            <span>Budget: NPR {proj.budget.toLocaleString()}</span>
+                          </div>
+                          <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2">
+                            <div className="bg-primary h-2 rounded-full transition-all duration-500" style={{ width: `${proj.progress}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-6 sm:p-8 pt-0 border-t border-slate-100 dark:border-slate-800/40 flex justify-between items-center text-xs text-slate-550 dark:text-slate-400">
+                        <span>{proj.beneficiaries} Beneficiaries</span>
+                        <Link href="/projects" className="text-primary font-bold hover:underline uppercase tracking-wider text-[11px]">
+                          View Details →
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+
+      case "videoShowcase":
+        return renderSection("pastor");
+
+      case "testimonials":
+        return (
+          <section key="testimonials" className="py-24 bg-white dark:bg-slate-900 px-4 sm:px-6 lg:px-8 border-y border-slate-200 dark:border-slate-800">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+                <span className="text-xs uppercase tracking-widest text-primary font-bold">Testimonials</span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white uppercase leading-tight">
+                  What Our Community Says
+                </h2>
+                <p className="text-lg text-slate-500 dark:text-slate-400 font-light leading-relaxed">
+                  Hear directly from our members, sponsors, and relief volunteers.
+                </p>
+              </div>
+
+              {testimonials.length === 0 ? (
+                <div className="grid md:grid-cols-3 gap-8">
+                  {[
+                    { id: "1", authorName: "Sarah Jenkins", role: "Short-term Volunteer, USA", content: "Spending two weeks with Harvest Ministries Nepal in Bhaktapur opened my eyes. Pastor Satis and Gita represent the true heart of servanthood.", category: "VOLUNTEER" },
+                    { id: "2", authorName: "Bir Bahadur Tamang", role: "Sindhupalchok Village Leader", content: "When the landslide blocked our clean water stream, we didn't know what to do. Harvest Ministries Nepal brought tools, pipes, and engineers.", category: "COMMUNITY" },
+                    { id: "3", authorName: "David Davidson", role: "Child Sponsor, Canada", content: "Sponsoring Binod has been an absolute blessing. The monthly progress reports are very transparent and detailed.", category: "SPONSOR" }
+                  ].map((test: any) => (
+                    <div key={test.id} className="bg-slate-105 dark:bg-slate-950/40 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-6">
+                      <p className="text-slate-650 dark:text-slate-350 italic leading-relaxed text-sm">
+                        "{test.content}"
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs uppercase">
+                          {test.authorName.slice(0, 2)}
+                        </div>
+                        <div>
+                          <strong className="block text-sm text-slate-900 dark:text-white">{test.authorName}</strong>
+                          <span className="block text-[10px] text-slate-500 dark:text-slate-450 uppercase tracking-wider font-semibold">{test.role}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {testimonials.slice(0, 3).map((test: any) => (
+                    <div key={test.id} className="bg-slate-105 dark:bg-slate-955/40 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-6">
+                      <p className="text-slate-650 dark:text-slate-350 italic leading-relaxed text-sm">
+                        "{test.content}"
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-10 h-10 rounded-full bg-slate-850 overflow-hidden shrink-0 border border-primary/20">
+                          {test.avatarUrl ? (
+                            <Image src={test.avatarUrl} alt={test.authorName} fill className="object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center font-bold text-white bg-primary uppercase text-xs">
+                              {test.authorName.slice(0, 2)}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <strong className="block text-sm text-slate-900 dark:text-white">{test.authorName}</strong>
+                          <span className="block text-[10px] text-slate-505 dark:text-slate-450 uppercase tracking-wider font-semibold">{test.role} — {test.category}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+
+      case "contact":
+        return (
+          <section key="contact" className="py-24 bg-slate-105 dark:bg-slate-950/40 px-4 sm:px-6 lg:px-8 border-y border-slate-200/50 dark:border-slate-800/40">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center max-w-2xl mx-auto space-y-4 mb-12">
+                <span className="text-xs uppercase tracking-widest text-primary font-bold">Contact</span>
+                <h2 className="text-3xl font-bold font-serif text-slate-900 dark:text-white uppercase leading-tight">
+                  Get in Touch with Us
+                </h2>
+                <p className="text-sm text-slate-505 dark:text-slate-400">
+                  Have questions, want to volunteer, or support a campaign? Send us a message directly!
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/60 p-8 sm:p-12 rounded-3xl shadow-xl">
+                <form 
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!contactName || !contactEmail || !contactSubject || !contactMessageText) {
+                      setContactStatus("error");
+                      setContactErr("Please fill out all required fields.");
+                      return;
+                    }
+                    setContactStatus("loading");
+                    setContactErr("");
+                    try {
+                      const res = await fetch("/api/contact", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          name: contactName,
+                          email: contactEmail,
+                          phone: contactPhone,
+                          subject: contactSubject,
+                          message: contactMessageText
+                        })
+                      });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.error || "Failed to submit message.");
+                      
+                      setContactStatus("success");
+                      setContactName("");
+                      setContactEmail("");
+                      setContactPhone("");
+                      setContactSubject("");
+                      setContactMessageText("");
+                    } catch(err: any) {
+                      setContactStatus("error");
+                      setContactErr(err.message);
+                    }
+                  }} 
+                  className="space-y-6"
+                >
+                  {contactStatus === "success" && (
+                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-450 rounded-xl text-xs font-semibold">
+                      🎉 Thank you! Your message has been sent successfully. We will contact you soon.
+                    </div>
+                  )}
+                  {contactStatus === "error" && (
+                    <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl text-xs font-semibold">
+                      ⚠️ {contactErr}
+                    </div>
+                  )}
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold block">Full Name *</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={contactName}
+                        onChange={(e) => setContactName(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-55 dark:bg-slate-950 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent transition"
+                        placeholder="Your full name"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold block">Email Address *</label>
+                      <input 
+                        type="email" 
+                        required
+                        value={contactEmail}
+                        onChange={(e) => setContactEmail(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-55 dark:bg-slate-955 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent transition"
+                        placeholder="your.email@example.com"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold block">Phone Number (Optional)</label>
+                      <input 
+                        type="text" 
+                        value={contactPhone}
+                        onChange={(e) => setContactPhone(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-55 dark:bg-slate-950 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent transition"
+                        placeholder="e.g. +977 9801234567"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold block">Subject *</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={contactSubject}
+                        onChange={(e) => setContactSubject(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-55 dark:bg-slate-950 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent transition"
+                        placeholder="Message subject"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold block">Your Message *</label>
+                    <textarea 
+                      rows={5}
+                      required
+                      value={contactMessageText}
+                      onChange={(e) => setContactMessageText(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-55 dark:bg-slate-950 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent transition resize-none"
+                      placeholder="Write your message here..."
+                    />
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button 
+                      type="submit" 
+                      disabled={contactStatus === "loading"}
+                      className="faith-gradient faith-gradient-hover text-white font-bold py-3.5 px-10 rounded-full text-xs uppercase tracking-wider disabled:opacity-45 inline-flex items-center gap-2"
+                    >
+                      {contactStatus === "loading" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      Send Message
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </section>
         );

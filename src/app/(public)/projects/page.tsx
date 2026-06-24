@@ -7,6 +7,7 @@ export const revalidate = 0; // Fetch dynamic data on every request
 
 export default async function ProjectsPage() {
   const projects = await prisma.project.findMany({
+    where: { published: true },
     orderBy: { createdAt: "desc" }
   });
 

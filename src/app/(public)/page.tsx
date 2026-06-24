@@ -54,7 +54,8 @@ export default async function HomePage() {
     ministries,
     projects,
     team,
-    faqs
+    faqs,
+    testimonials
   ] = await Promise.all([
     prisma.ministry.count(),
     prisma.project.count(),
@@ -71,13 +72,20 @@ export default async function HomePage() {
       orderBy: { createdAt: 'desc' }
     }),
     prisma.project.findMany({
+      where: { published: true },
       orderBy: { createdAt: 'desc' }
     }),
     prisma.teamMember.findMany({
+      where: { published: true },
       orderBy: { order: 'asc' }
     }),
     prisma.faq.findMany({
+      where: { published: true },
       orderBy: { createdAt: 'asc' }
+    }),
+    prisma.testimonial.findMany({
+      where: { published: true },
+      orderBy: { createdAt: 'desc' }
     })
   ]);
 
@@ -99,6 +107,7 @@ export default async function HomePage() {
       projects={projects}
       team={team}
       faqs={faqs}
+      testimonials={testimonials}
     />
   );
 }

@@ -21,9 +21,11 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AboutPage() {
   const [team, faqs, settings] = await Promise.all([
     prisma.teamMember.findMany({
+      where: { published: true },
       orderBy: { order: 'asc' }
     }),
     prisma.faq.findMany({
+      where: { published: true },
       orderBy: { createdAt: 'asc' }
     }),
     prisma.systemSettings.findFirst()

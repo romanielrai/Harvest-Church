@@ -225,14 +225,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mod
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      const uploadDir = path.join(process.cwd(), "public", "uploads");
-      await mkdir(uploadDir, { recursive: true });
+      let url = "";
+      if (process.env.CLOUDINARY_CLOUD_NAME) {
+        const { uploadToCloudinary } = await import("@/lib/cloudinary");
+        const uploadResult = await uploadToCloudinary(buffer, folder, file.name);
+        url = uploadResult.url;
+      } else {
+        const uploadDir = path.join(process.cwd(), "public", "uploads");
+        await mkdir(uploadDir, { recursive: true });
 
-      const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-      const filePath = path.join(uploadDir, safeName);
-      await writeFile(filePath, buffer);
-
-      const url = `/uploads/${safeName}`;
+        const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+        const filePath = path.join(uploadDir, safeName);
+        await writeFile(filePath, buffer);
+        url = `/uploads/${safeName}`;
+      }
 
       const mediaType = file.type.startsWith("image") 
         ? "IMAGE" 
@@ -308,7 +314,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mod
             progress: parseFloat(data.progress) || 0,
             status: data.status || "ONGOING",
             coverImage: data.coverImage || "/images/img_page1_1.jpeg",
-            beneficiaries: parseInt(data.beneficiaries) || 0
+            beneficiaries: parseInt(data.beneficiaries) || 0,
+            published: data.published !== false
           }
         });
         return NextResponse.json(project, { status: 201 });
@@ -321,7 +328,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mod
             content: data.content,
             category: data.category || "COMMUNITY",
             avatarUrl: data.avatarUrl || null,
-            videoUrl: data.videoUrl || null
+            videoUrl: data.videoUrl || null,
+            published: data.published !== false
           }
         });
         return NextResponse.json(testimonial, { status: 201 });
@@ -333,7 +341,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mod
             role: data.role,
             bio: data.bio || "",
             image: data.image || "/images/img_page1_2.jpeg",
-            order: parseInt(data.order) || 0
+            order: parseInt(data.order) || 0,
+            published: data.published !== false
           }
         });
         return NextResponse.json(member, { status: 201 });
@@ -342,7 +351,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mod
         const faq = await prisma.faq.create({
           data: {
             question: data.question,
-            answer: data.answer
+            answer: data.answer,
+            published: data.published !== false
           }
         });
         return NextResponse.json(faq, { status: 201 });
@@ -379,8 +389,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ modu
       return NextResponse.json({ error: "Access Denied: Insufficient Permissions" }, { status: 403 });
     }
 
-    const data = await req.json();
-    const id = data.id;
+    const { searchParams } = new URL(req.url);
+    const queryId = searchParams.get("id");
+
+    let data: any = {};
+    const contentType = req.headers.get("content-type") || "";
+    if (!contentType.includes("multipart/form-data")) {
+      data = await req.json().catch(() => ({}));
+    }
+
+    const id = queryId || data.id;
 
     if (module !== "settings" && !id) {
       return NextResponse.json({ error: "Resource identifier ID is missing." }, { status: 400 });
@@ -468,7 +486,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ modu
             progress: parseFloat(data.progress) || 0,
             status: data.status,
             coverImage: data.coverImage,
-            beneficiaries: parseInt(data.beneficiaries) || 0
+            beneficiaries: parseInt(data.beneficiaries) || 0,
+            published: data.published
           }
         });
         return NextResponse.json(updatedProject);
@@ -482,7 +501,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ modu
             content: data.content,
             category: data.category,
             avatarUrl: data.avatarUrl,
-            videoUrl: data.videoUrl
+            videoUrl: data.videoUrl,
+            published: data.published
           }
         });
         return NextResponse.json(updatedTestimonial);
@@ -495,7 +515,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ modu
             role: data.role,
             bio: data.bio,
             image: data.image,
-            order: parseInt(data.order) || 0
+            order: parseInt(data.order) || 0,
+            published: data.published
           }
         });
         return NextResponse.json(updatedMember);
@@ -505,7 +526,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ modu
           where: { id },
           data: {
             question: data.question,
-            answer: data.answer
+            answer: data.answer,
+            published: data.published
           }
         });
         return NextResponse.json(updatedFaq);
@@ -532,6 +554,54 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ modu
           data: updateData
         });
         return NextResponse.json({ id: updatedUser.id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role });
+
+      case "media":
+        const mediaFile = await prisma.mediaFile.findUnique({ where: { id } });
+        if (!mediaFile) {
+          return NextResponse.json({ error: "Media file not found" }, { status: 404 });
+        }
+
+        const formData = await req.formData();
+        const file = formData.get("file") as File;
+        if (!file) {
+          return NextResponse.json({ error: "No replacement file was uploaded." }, { status: 400 });
+        }
+
+        const fileBytes = await file.arrayBuffer();
+        const fileBuffer = Buffer.from(fileBytes);
+
+        let replacedUrl = mediaFile.url;
+
+        if (process.env.CLOUDINARY_CLOUD_NAME) {
+          const { uploadToCloudinary } = await import("@/lib/cloudinary");
+          const uploadResult = await uploadToCloudinary(fileBuffer, mediaFile.folder, file.name);
+          replacedUrl = uploadResult.url;
+        } else {
+          if (mediaFile.url.startsWith("/uploads/")) {
+            const diskPath = path.join(process.cwd(), "public", mediaFile.url);
+            await unlink(diskPath).catch(() => {});
+          }
+          const uploadDir = path.join(process.cwd(), "public", "uploads");
+          const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+          const filePath = path.join(uploadDir, safeName);
+          await writeFile(filePath, fileBuffer);
+          replacedUrl = `/uploads/${safeName}`;
+        }
+
+        const updatedMedia = await prisma.mediaFile.update({
+          where: { id },
+          data: {
+            url: replacedUrl,
+            name: file.name,
+            size: file.size,
+            type: file.type.startsWith("image") 
+              ? "IMAGE" 
+              : file.type.startsWith("video") 
+                ? "VIDEO" 
+                : "DOCUMENT"
+          }
+        });
+        return NextResponse.json(updatedMedia);
 
       default:
         return NextResponse.json({ error: "Operation not supported on module" }, { status: 400 });

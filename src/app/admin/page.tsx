@@ -85,6 +85,7 @@ export default function AdminDashboardPage() {
   
   // Media Upload File State
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [dragActive, setDragActive] = useState(false);
 
   // Authenticate user and fetch initial stats
   useEffect(() => {
@@ -190,6 +191,45 @@ export default function AdminDashboardPage() {
         return false;
       default:
         return false;
+    }
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      setSubmitting(true);
+      const form = new FormData();
+      form.append("file", file);
+      form.append("folder", uploadFolder);
+
+      try {
+        const res = await fetch(`/api/admin/media`, {
+          method: "POST",
+          body: form,
+        });
+
+        if (!res.ok) throw new Error("Failed to upload media file.");
+        showNotification("success", "Media uploaded and indexed successfully!");
+        await loadAllContent();
+      } catch (err: any) {
+        showNotification("error", err.message);
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
@@ -452,7 +492,10 @@ export default function AdminDashboardPage() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as ModuleType)}
+                  onClick={() => {
+                    setActiveTab(tab.id as ModuleType);
+                    setSearchTerm("");
+                  }}
                   className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                     activeTab === tab.id 
                       ? "bg-primary text-white shadow-md" 
@@ -686,24 +729,40 @@ export default function AdminDashboardPage() {
                 })}
               </div>
             </div>
-          )}
-
-          {/* C. MEDIA LIBRARY */}
+          )}          {/* C. MEDIA LIBRARY */}
           {activeTab === "media" && (
-            <div className="space-y-8 animate-fade-in bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8">
+            <div 
+              onDragEnter={handleDrag}
+              onDragOver={handleDrag}
+              onDragLeave={handleDrag}
+              onDrop={handleDrop}
+              className={`space-y-8 animate-fade-in bg-slate-900 border rounded-3xl p-6 sm:p-8 transition-all relative ${
+                dragActive ? "border-primary bg-primary/5 scale-[1.01]" : "border-slate-800"
+              }`}
+            >
+              {dragActive && (
+                <div className="absolute inset-0 bg-primary/10 border-4 border-dashed border-primary rounded-3xl z-40 flex items-center justify-center pointer-events-none backdrop-blur-xs">
+                  <div className="text-center space-y-2">
+                    <Upload className="w-12 h-12 text-primary animate-bounce mx-auto" />
+                    <p className="text-base text-white font-bold uppercase tracking-wider">Drop files here to upload</p>
+                    <p className="text-xs text-slate-400 font-semibold">Upload directly into folder "{uploadFolder}"</p>
+                  </div>
+                </div>
+              )}
               
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
                 <div>
                   <h2 className="text-xl font-bold font-serif uppercase tracking-wider text-white">Media Manager</h2>
-                  <p className="text-xs text-slate-500 mt-1">Upload images, videos, and PDFs to use across the site.</p>
+                  <p className="text-xs text-slate-500 mt-1">Upload images, videos, and PDFs to use across the site. Drag-and-drop files here.</p>
                 </div>
                 
                 {/* Upload Form */}
-                <form onSubmit={handleFileUpload} className="flex flex-wrap items-center gap-3 bg-slate-950 border border-slate-850 p-2 rounded-xl">
+                <form onSubmit={handleFileUpload} className="flex flex-wrap items-center gap-3 bg-slate-955 border border-slate-850 p-2 rounded-xl">
                   <input 
                     type="file" 
                     onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
                     required
+                    accept="image/*,video/*,.pdf,.docx,.doc"
                     className="text-xs text-slate-400 max-w-[180px] file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-700"
                   />
                   <input 
@@ -725,32 +784,99 @@ export default function AdminDashboardPage() {
                 </form>
               </div>
 
-              {/* Media Search & Folder Filter */}
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex max-w-sm items-center gap-2 bg-slate-950 border border-slate-850 px-3 py-2 rounded-xl">
-                  <Search className="w-4.5 h-4.5 text-slate-500 shrink-0" />
-                  <input 
-                    type="text" 
-                    placeholder="Search uploaded files..." 
-                    value={mediaSearch}
-                    onChange={(e) => setMediaSearch(e.target.value)}
-                    className="bg-transparent text-sm text-slate-105 placeholder-slate-500 focus:outline-none w-full"
-                  />
+              {/* Media Search & Folder Filter & New Folder Creator */}
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex max-w-sm items-center gap-2 bg-slate-955 border border-slate-850 px-3 py-2 rounded-xl">
+                    <Search className="w-4.5 h-4.5 text-slate-500 shrink-0" />
+                    <input 
+                      type="text" 
+                      placeholder="Search uploaded files..." 
+                      value={mediaSearch}
+                      onChange={(e) => setMediaSearch(e.target.value)}
+                      className="bg-transparent text-sm text-slate-105 placeholder-slate-500 focus:outline-none w-full"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 bg-slate-955 border border-slate-850 px-3 py-2 rounded-xl">
+                    <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Active:</span>
+                    <select
+                      value={uploadFolder}
+                      onChange={(e) => setUploadFolder(e.target.value)}
+                      className="bg-transparent border-0 text-xs font-semibold text-slate-350 focus:outline-none cursor-pointer"
+                    >
+                      {Array.from(new Set(["general", ...media.map(m => m.folder || "general")])).map(folder => (
+                        <option key={folder} value={folder}>{folder}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2 bg-slate-950 border border-slate-850 px-3 py-2 rounded-xl">
-                  <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Folder:</span>
-                  <select
-                    value={selectedFolderFilter}
-                    onChange={(e) => setSelectedFolderFilter(e.target.value)}
-                    className="bg-transparent border-0 text-xs font-semibold text-slate-300 focus:outline-none cursor-pointer"
+                {/* Add New Folder */}
+                <div className="flex items-center gap-2 bg-slate-955 border border-slate-850 px-3 py-1 rounded-xl">
+                  <input 
+                    type="text"
+                    placeholder="Create folder..."
+                    id="newFolderNameInput"
+                    className="bg-transparent text-xs text-white placeholder-slate-600 focus:outline-none w-28 py-1.5"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const val = e.currentTarget.value.trim().toLowerCase();
+                        if (val) {
+                          setUploadFolder(val);
+                          setSelectedFolderFilter(val);
+                          e.currentTarget.value = "";
+                          showNotification("success", `Active folder changed to: ${val}`);
+                        }
+                      }
+                    }}
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      const input = document.getElementById("newFolderNameInput") as HTMLInputElement;
+                      const val = input?.value.trim().toLowerCase();
+                      if (val) {
+                        setUploadFolder(val);
+                        setSelectedFolderFilter(val);
+                        input.value = "";
+                        showNotification("success", `Active folder changed to: ${val}`);
+                      }
+                    }}
+                    className="text-[10px] uppercase font-bold text-primary hover:text-white"
                   >
-                    <option value="All">All Folders</option>
-                    {Array.from(new Set(media.map(m => m.folder || "general"))).map(folder => (
-                      <option key={folder} value={folder}>{folder}</option>
-                    ))}
-                  </select>
+                    + Add
+                  </button>
                 </div>
+              </div>
+
+              {/* Folder filters tags row */}
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/40">
+                <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mr-2">Filter by Folder:</span>
+                <button
+                  onClick={() => setSelectedFolderFilter("All")}
+                  className={`px-3 py-1 rounded-full text-[9px] uppercase tracking-wider font-bold transition ${
+                    selectedFolderFilter === "All"
+                      ? "bg-primary text-white shadow-sm"
+                      : "bg-slate-955 border border-slate-850 text-slate-400 hover:text-white"
+                  }`}
+                >
+                  All Folders
+                </button>
+                {Array.from(new Set(media.map(m => m.folder || "general"))).map(folder => (
+                  <button
+                    key={folder}
+                    onClick={() => setSelectedFolderFilter(folder)}
+                    className={`px-3 py-1 rounded-full text-[9px] uppercase tracking-wider font-bold transition ${
+                      selectedFolderFilter === folder
+                        ? "bg-primary text-white shadow-sm"
+                        : "bg-slate-955 border border-slate-850 text-slate-405 hover:text-white"
+                    }`}
+                  >
+                    {folder}
+                  </button>
+                ))}
               </div>
 
               {/* File Grid */}
@@ -759,7 +885,7 @@ export default function AdminDashboardPage() {
                   .filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase()))
                   .filter(m => selectedFolderFilter === "All" || m.folder === selectedFolderFilter)
                   .map((item) => (
-                    <div key={item.id} className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden p-3 space-y-2 flex flex-col justify-between group relative">
+                    <div key={item.id} className="bg-slate-955 border border-slate-850 rounded-2xl overflow-hidden p-3 space-y-2 flex flex-col justify-between group relative">
                       
                       {/* Media Preview Box */}
                       <div className="aspect-square bg-slate-900 rounded-lg flex items-center justify-center overflow-hidden relative">
@@ -779,32 +905,61 @@ export default function AdminDashboardPage() {
                         </div>
                       </div>
 
-                    {/* Copy Link / Delete Buttons */}
-                    <div className="flex gap-2 pt-1.5 border-t border-slate-900">
-                      <button 
-                        onClick={() => {
-                          navigator.clipboard.writeText(item.url);
-                          showNotification("success", "File URL copied to clipboard!");
-                        }}
-                        className="flex-1 py-1 rounded bg-slate-900 hover:bg-slate-800 text-[9px] text-slate-350 font-bold uppercase tracking-wider"
-                      >
-                        Copy URL
-                      </button>
-                      <button 
-                        onClick={() => handleDelete("media", item.id)}
-                        className="py-1 px-1.5 rounded bg-red-950/20 border border-red-900/10 hover:bg-red-500/10 text-red-400"
-                        title="Delete Permanently"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {/* Copy Link / Replace / Delete Buttons */}
+                      <div className="flex gap-2 pt-1.5 border-t border-slate-900 flex-wrap">
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(item.url);
+                            showNotification("success", "File URL copied to clipboard!");
+                          }}
+                          className="flex-1 py-1 rounded bg-slate-900 hover:bg-slate-800 text-[9px] text-slate-350 font-bold uppercase tracking-wider"
+                        >
+                          Copy URL
+                        </button>
+                        
+                        <label className="py-1 px-2 rounded bg-slate-900 hover:bg-slate-800 text-[9px] text-slate-350 font-bold uppercase tracking-wider cursor-pointer text-center flex-1 select-none">
+                          Replace
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*,video/*,.pdf,.docx,.doc"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              if (!confirm(`Are you sure you want to replace this media file with "${file.name}"?`)) return;
+                              setSubmitting(true);
+                              const form = new FormData();
+                              form.append("file", file);
+                              try {
+                                const res = await fetch(`/api/admin/media?id=${item.id}`, {
+                                  method: "PUT",
+                                  body: form
+                                });
+                                if (!res.ok) throw new Error("Failed to replace media file.");
+                                showNotification("success", "Media replaced successfully!");
+                                await loadAllContent();
+                              } catch(err: any) {
+                                showNotification("error", err.message);
+                              } finally {
+                                setSubmitting(false);
+                              }
+                            }}
+                          />
+                        </label>
+
+                        <button 
+                          onClick={() => handleDelete("media", item.id)}
+                          className="py-1 px-1.5 rounded bg-red-950/20 border border-red-900/10 hover:bg-red-500/10 text-red-400 animate-transition"
+                          title="Delete Permanently"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
-          )}
-
-          {/* D. BLOG POSTS */}
+          )}          {/* D. BLOG POSTS */}
           {activeTab === "blogs" && (
             <div className="space-y-8 animate-fade-in bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
@@ -812,12 +967,26 @@ export default function AdminDashboardPage() {
                   <h2 className="text-xl font-bold font-serif uppercase tracking-wider text-white font-medium">Blogs Content Management</h2>
                   <p className="text-xs text-slate-500 mt-1">Manage articles, updates, news, and drafts.</p>
                 </div>
-                <button 
-                  onClick={openAddModal}
-                  className="faith-gradient faith-gradient-hover text-white font-bold py-2 px-6 rounded-full text-xs uppercase tracking-wider inline-flex items-center gap-1.5"
-                >
-                  <Plus className="w-4 h-4" /> Add Blog Post
-                </button>
+                
+                {/* Search Bar & Add Button */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 bg-slate-955 border border-slate-850 px-3 py-1.5 rounded-xl text-xs">
+                    <Search className="w-4 h-4 text-slate-500" />
+                    <input 
+                      type="text" 
+                      placeholder="Search blogs..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="bg-transparent text-white placeholder-slate-650 focus:outline-none w-36"
+                    />
+                  </div>
+                  <button 
+                    onClick={openAddModal}
+                    className="faith-gradient faith-gradient-hover text-white font-bold py-2 px-6 rounded-full text-xs uppercase tracking-wider inline-flex items-center gap-1.5 shrink-0"
+                  >
+                    <Plus className="w-4 h-4" /> Add Blog Post
+                  </button>
+                </div>
               </div>
 
               {/* Table list */}
@@ -834,47 +1003,69 @@ export default function AdminDashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {blogs.map((blog) => (
-                      <tr key={blog.id} className="border-b border-slate-800/40 hover:bg-slate-950/20 transition-colors">
-                        <td className="py-3.5">
-                          <div className="relative w-8 h-8 rounded bg-slate-800 overflow-hidden">
-                            <Image src={blog.coverImage || "/images/img_page1_1.jpeg"} alt="" fill className="object-cover" />
-                          </div>
-                        </td>
-                        <td className="py-3.5 font-bold text-white">{blog.title}</td>
-                        <td className="py-3.5 text-slate-400">{blog.authorName}</td>
-                        <td className="py-3.5">
-                          {blog.published ? (
-                            <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-[9px] uppercase tracking-wider">Published</span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400 font-semibold text-[9px] uppercase tracking-wider">Draft</span>
-                          )}
-                        </td>
-                        <td className="py-3.5 text-slate-500">{new Date(blog.createdAt).toLocaleDateString()}</td>
-                        <td className="py-3.5 text-right space-x-2">
-                          <button 
-                            onClick={() => openEditModal(blog)}
-                            className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-350"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete("blogs", blog.id)}
-                            className="p-1 rounded bg-red-950/20 border border-red-900/10 hover:bg-red-500/10 text-red-400"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {blogs
+                      .filter(blog => 
+                        blog.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                        blog.authorName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                        blog.summary?.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((blog) => (
+                        <tr key={blog.id} className="border-b border-slate-800/40 hover:bg-slate-955/20 transition-colors">
+                          <td className="py-3.5">
+                            <div className="relative w-8 h-8 rounded bg-slate-800 overflow-hidden">
+                              <Image src={blog.coverImage || "/images/img_page1_1.jpeg"} alt="" fill className="object-cover" />
+                            </div>
+                          </td>
+                          <td className="py-3.5 font-bold text-white">{blog.title}</td>
+                          <td className="py-3.5 text-slate-400">{blog.authorName}</td>
+                          <td className="py-3.5">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch(`/api/admin/blogs`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ id: blog.id, published: !blog.published })
+                                  });
+                                  if (res.ok) {
+                                    await loadAllContent();
+                                    showNotification("success", "Blog status updated live!");
+                                  }
+                                } catch(e) {}
+                              }}
+                              title="Click to toggle status"
+                              className="focus:outline-none cursor-pointer"
+                            >
+                              {blog.published ? (
+                                <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-[9px] uppercase tracking-wider">Published</span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400 font-semibold text-[9px] uppercase tracking-wider">Draft</span>
+                              )}
+                            </button>
+                          </td>
+                          <td className="py-3.5 text-slate-500">{new Date(blog.createdAt).toLocaleDateString()}</td>
+                          <td className="py-3.5 text-right space-x-2">
+                            <button 
+                              onClick={() => openEditModal(blog)}
+                              className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-350"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                              onClick={() => handleDelete("blogs", blog.id)}
+                              className="p-1 rounded bg-red-955/20 border border-red-900/10 hover:bg-red-500/10 text-red-400"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
 
             </div>
-          )}
-
-          {/* E. SERVICES / MINISTRIES */}
+          )}          {/* E. SERVICES / MINISTRIES */}
           {activeTab === "services" && (
             <div className="space-y-8 animate-fade-in bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
@@ -882,207 +1073,378 @@ export default function AdminDashboardPage() {
                   <h2 className="text-xl font-bold font-serif uppercase tracking-wider text-white">Ministries & Services</h2>
                   <p className="text-xs text-slate-500 mt-1">Manage active church ministries and public services.</p>
                 </div>
-                <button 
-                  onClick={openAddModal}
-                  className="faith-gradient faith-gradient-hover text-white font-bold py-2 px-6 rounded-full text-xs uppercase tracking-wider inline-flex items-center gap-1.5"
-                >
-                  <Plus className="w-4 h-4" /> Add Service
-                </button>
+                
+                {/* Search Bar & Add Button */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 bg-slate-955 border border-slate-850 px-3 py-1.5 rounded-xl text-xs">
+                    <Search className="w-4 h-4 text-slate-500" />
+                    <input 
+                      type="text" 
+                      placeholder="Search services..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="bg-transparent text-white placeholder-slate-650 focus:outline-none w-36"
+                    />
+                  </div>
+                  <button 
+                    onClick={openAddModal}
+                    className="faith-gradient faith-gradient-hover text-white font-bold py-2 px-6 rounded-full text-xs uppercase tracking-wider inline-flex items-center gap-1.5 shrink-0"
+                  >
+                    <Plus className="w-4 h-4" /> Add Service
+                  </button>
+                </div>
               </div>
 
               {/* Grid list */}
               <div className="grid md:grid-cols-2 gap-6">
-                {services.map((item) => (
-                  <div key={item.id} className="bg-slate-950 border border-slate-850 p-6 rounded-2xl flex justify-between items-start gap-4">
-                    <div className="space-y-2">
-                      <span className="text-[10px] text-primary font-bold uppercase tracking-widest">{item.category}</span>
-                      <h3 className="text-base font-bold text-white font-serif">{item.title}</h3>
-                      <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">{item.description}</p>
+                {services
+                  .filter(item => 
+                    item.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    item.category?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((item) => (
+                    <div key={item.id} className="bg-slate-955 border border-slate-850 p-6 rounded-2xl flex justify-between items-start gap-4">
+                      <div className="space-y-2">
+                        <span className="text-[10px] text-primary font-bold uppercase tracking-widest">{item.category}</span>
+                        <h3 className="text-base font-bold text-white font-serif">{item.title}</h3>
+                        <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">{item.description}</p>
+                        
+                        {/* Live active toggle */}
+                        <div className="pt-2">
+                          <button
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(`/api/admin/services`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ id: item.id, active: !item.active })
+                                });
+                                if (res.ok) {
+                                  await loadAllContent();
+                                  showNotification("success", "Service status updated live!");
+                                }
+                              } catch(e) {}
+                            }}
+                            title="Click to toggle status"
+                            className="focus:outline-none cursor-pointer text-left block"
+                          >
+                            {item.active ? (
+                              <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-[9px] uppercase tracking-wider">Published</span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400 font-semibold text-[9px] uppercase tracking-wider">Draft</span>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col gap-2 shrink-0">
+                        <button 
+                          onClick={() => openEditModal(item)}
+                          className="p-1.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-350 text-xs border border-slate-850"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete("services", item.id)}
+                          className="p-1.5 rounded bg-red-955/20 border border-red-900/10 hover:bg-red-500/10 text-red-400 text-xs"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    
-                    <div className="flex flex-col gap-2">
-                      <button 
-                        onClick={() => openEditModal(item)}
-                        className="p-1.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-350 text-xs border border-slate-850"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete("services", item.id)}
-                        className="p-1.5 rounded bg-red-950/20 border border-red-900/10 hover:bg-red-500/10 text-red-400 text-xs"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
 
             </div>
-          )}
-
-          {/* F. PORTFOLIO / PROJECTS */}
+          )}          {/* F. PORTFOLIO / PROJECTS */}
           {activeTab === "portfolio" && (
             <div className="space-y-8 animate-fade-in bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
                 <div>
-                  <h2 className="text-xl font-bold font-serif uppercase tracking-wider text-white">Portfolio Projects</h2>
+                  <h2 className="text-xl font-bold font-serif uppercase tracking-wider text-white font-medium">Portfolio Projects</h2>
                   <p className="text-xs text-slate-500 mt-1">Manage ongoing humanitarian, water pump, and building projects.</p>
                 </div>
-                <button 
-                  onClick={openAddModal}
-                  className="faith-gradient faith-gradient-hover text-white font-bold py-2 px-6 rounded-full text-xs uppercase tracking-wider inline-flex items-center gap-1.5"
-                >
-                  <Plus className="w-4 h-4" /> Add Project
-                </button>
+                
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 bg-slate-955 border border-slate-850 px-3 py-1.5 rounded-xl text-xs">
+                    <Search className="w-4 h-4 text-slate-500" />
+                    <input 
+                      type="text" 
+                      placeholder="Search projects..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="bg-transparent text-white placeholder-slate-650 focus:outline-none w-36"
+                    />
+                  </div>
+                  <button 
+                    onClick={openAddModal}
+                    className="faith-gradient faith-gradient-hover text-white font-bold py-2 px-6 rounded-full text-xs uppercase tracking-wider inline-flex items-center gap-1.5 shrink-0"
+                  >
+                    <Plus className="w-4 h-4" /> Add Project
+                  </button>
+                </div>
               </div>
 
               {/* Cards grid */}
               <div className="grid md:grid-cols-3 gap-6">
-                {projects.map((proj) => (
-                  <div key={proj.id} className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden flex flex-col justify-between">
-                    
-                    {/* Top thumbnail */}
-                    <div className="relative aspect-video bg-slate-900">
-                      <Image src={proj.coverImage || "/images/img_page1_1.jpeg"} alt="" fill className="object-cover" />
-                      <span className="absolute top-3 right-3 px-2 py-0.5 rounded bg-slate-900/90 text-white font-bold text-[8px] uppercase tracking-wider">
-                        {proj.status}
-                      </span>
-                    </div>
-
-                    <div className="p-5 space-y-4">
-                      <div>
-                        <h3 className="text-sm font-bold text-white truncate">{proj.title}</h3>
-                        <span className="text-[10px] text-slate-550 font-bold block mt-1">Progress: {proj.progress}%</span>
-                      </div>
+                {projects
+                  .filter(proj => 
+                    proj.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    proj.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    proj.status?.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((proj) => (
+                    <div key={proj.id} className="bg-slate-955 border border-slate-855 rounded-2xl overflow-hidden flex flex-col justify-between">
                       
-                      {/* Visual progress bar */}
-                      <div className="w-full bg-slate-850 rounded-full h-1.5">
-                        <div className="bg-primary h-1.5 rounded-full" style={{ width: `${proj.progress}%` }} />
+                      {/* Top thumbnail */}
+                      <div className="relative aspect-video bg-slate-900">
+                        <Image src={proj.coverImage || "/images/img_page1_1.jpeg"} alt="" fill className="object-cover" />
+                        <span className="absolute top-3 right-3 px-2 py-0.5 rounded bg-slate-900/90 text-white font-bold text-[8px] uppercase tracking-wider">
+                          {proj.status}
+                        </span>
                       </div>
 
-                      <div className="flex justify-between items-center text-[10px] text-slate-400">
-                        <span>Budget: NPR {proj.budget.toLocaleString()}</span>
-                        <span>{proj.beneficiaries} Beneficiaries</span>
+                      <div className="p-5 space-y-4">
+                        <div>
+                          <h3 className="text-sm font-bold text-white truncate">{proj.title}</h3>
+                          <span className="text-[10px] text-slate-550 font-bold block mt-1">Progress: {proj.progress}%</span>
+                        </div>
+                        
+                        {/* Visual progress bar */}
+                        <div className="w-full bg-slate-850 rounded-full h-1.5">
+                          <div className="bg-primary h-1.5 rounded-full" style={{ width: `${proj.progress}%` }} />
+                        </div>
+
+                        <div className="flex justify-between items-center text-[10px] text-slate-400">
+                          <span>Budget: NPR {proj.budget.toLocaleString()}</span>
+                          <span>{proj.beneficiaries} Beneficiaries</span>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="p-5 pt-0 border-t border-slate-900/50 flex gap-2">
-                      <button 
-                        onClick={() => openEditModal(proj)}
-                        className="flex-1 py-1.5 rounded bg-slate-900 hover:bg-slate-850 text-xs font-bold text-slate-350 flex items-center justify-center gap-1 border border-slate-850"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" /> Edit
-                      </button>
-                      <button 
-                        onClick={() => handleDelete("portfolio", proj.id)}
-                        className="py-1.5 px-3 rounded bg-red-950/20 border border-red-900/10 hover:bg-red-500/10 text-red-400 text-xs"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                      <div className="p-5 pt-0 border-t border-slate-900/50 flex gap-2 items-center justify-between">
+                        <button
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(`/api/admin/portfolio`, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ id: proj.id, published: !proj.published })
+                              });
+                              if (res.ok) {
+                                await loadAllContent();
+                                showNotification("success", "Project status updated live!");
+                              }
+                            } catch(e) {}
+                          }}
+                          className="focus:outline-none cursor-pointer"
+                        >
+                          {proj.published ? (
+                            <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-[9px] uppercase tracking-wider">Published</span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400 font-semibold text-[9px] uppercase tracking-wider">Draft</span>
+                          )}
+                        </button>
+                        
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => openEditModal(proj)}
+                            className="py-1.5 px-3 rounded bg-slate-900 hover:bg-slate-855 text-xs font-bold text-slate-355 flex items-center justify-center gap-1 border border-slate-850"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" /> Edit
+                          </button>
+                          <button 
+                            onClick={() => handleDelete("portfolio", proj.id)}
+                            className="py-1.5 px-3 rounded bg-red-955/20 border border-red-900/10 hover:bg-red-500/10 text-red-400 text-xs"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
 
-                  </div>
-                ))}
+                    </div>
+                  ))}
               </div>
 
             </div>
-          )}
-
-          {/* G. TESTIMONIALS */}
+          )}          {/* G. TESTIMONIALS */}
           {activeTab === "testimonials" && (
             <div className="space-y-8 animate-fade-in bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
                 <div>
-                  <h2 className="text-xl font-bold font-serif uppercase tracking-wider text-white">Testimonials</h2>
+                  <h2 className="text-xl font-bold font-serif uppercase tracking-wider text-white font-medium">Testimonials</h2>
                   <p className="text-xs text-slate-500 mt-1">Review and manage testimonies shared by sponsors, volunteers, and members.</p>
                 </div>
-                <button 
-                  onClick={openAddModal}
-                  className="faith-gradient faith-gradient-hover text-white font-bold py-2 px-6 rounded-full text-xs uppercase tracking-wider inline-flex items-center gap-1.5"
-                >
-                  <Plus className="w-4 h-4" /> Add Testimonial
-                </button>
+                
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 bg-slate-955 border border-slate-850 px-3 py-1.5 rounded-xl text-xs">
+                    <Search className="w-4 h-4 text-slate-500" />
+                    <input 
+                      type="text" 
+                      placeholder="Search testimonials..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="bg-transparent text-white placeholder-slate-650 focus:outline-none w-36"
+                    />
+                  </div>
+                  <button 
+                    onClick={openAddModal}
+                    className="faith-gradient faith-gradient-hover text-white font-bold py-2 px-6 rounded-full text-xs uppercase tracking-wider inline-flex items-center gap-1.5 shrink-0"
+                  >
+                    <Plus className="w-4 h-4" /> Add Testimonial
+                  </button>
+                </div>
               </div>
 
               {/* List */}
               <div className="space-y-4">
-                {testimonials.map((test) => (
-                  <div key={test.id} className="bg-slate-950 border border-slate-850 p-6 rounded-2xl flex justify-between items-start gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <strong className="text-white text-sm">{test.authorName}</strong>
-                        <span className="text-[10px] text-slate-500 font-medium">({test.role})</span>
-                        <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-[9px] uppercase tracking-wider font-bold">{test.category}</span>
+                {testimonials
+                  .filter(test => 
+                    test.authorName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    test.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    test.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    test.category?.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((test) => (
+                    <div key={test.id} className="bg-slate-955 border border-slate-850 p-6 rounded-2xl flex justify-between items-start gap-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <strong className="text-white text-sm">{test.authorName}</strong>
+                          <span className="text-[10px] text-slate-505 font-medium">({test.role})</span>
+                          <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-[9px] uppercase tracking-wider font-bold">{test.category}</span>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(`/api/admin/testimonials`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ id: test.id, published: !test.published })
+                                });
+                                if (res.ok) {
+                                  await loadAllContent();
+                                  showNotification("success", "Testimonial status updated live!");
+                                }
+                              } catch(e) {}
+                            }}
+                            className="focus:outline-none cursor-pointer ml-2"
+                          >
+                            {test.published ? (
+                              <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-[9px] uppercase tracking-wider">Published</span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400 font-semibold text-[9px] uppercase tracking-wider">Draft</span>
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-xs text-slate-350 italic leading-relaxed">"{test.content}"</p>
                       </div>
-                      <p className="text-xs text-slate-350 italic leading-relaxed">"{test.content}"</p>
+                      
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => openEditModal(test)}
+                          className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-355 border border-slate-850"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete("testimonials", test.id)}
+                          className="p-1 rounded bg-red-950/20 border border-red-900/10 hover:bg-red-500/10 text-red-400"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => openEditModal(test)}
-                        className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-350 border border-slate-850"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete("testimonials", test.id)}
-                        className="p-1 rounded bg-red-950/20 border border-red-900/10 hover:bg-red-500/10 text-red-400"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
 
             </div>
-          )}
-
-          {/* H. TEAM MEMBERS */}
+          )}          {/* H. TEAM MEMBERS */}
           {activeTab === "team" && (
             <div className="space-y-8 animate-fade-in bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
                 <div>
-                  <h2 className="text-xl font-bold font-serif uppercase tracking-wider text-white">Team Profiles</h2>
-                  <p className="text-xs text-slate-500 mt-1">Manage elder pastors, co-founders, and child coordinators.</p>
+                  <h2 className="text-xl font-bold font-serif uppercase tracking-wider text-white font-medium">Team Profiles</h2>
+                  <p className="text-xs text-slate-505 mt-1">Manage elder pastors, co-founders, and child coordinators.</p>
                 </div>
-                <button 
-                  onClick={openAddModal}
-                  className="faith-gradient faith-gradient-hover text-white font-bold py-2 px-6 rounded-full text-xs uppercase tracking-wider inline-flex items-center gap-1.5"
-                >
-                  <Plus className="w-4 h-4" /> Add Team Member
-                </button>
+                
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 bg-slate-955 border border-slate-850 px-3 py-1.5 rounded-xl text-xs">
+                    <Search className="w-4 h-4 text-slate-500" />
+                    <input 
+                      type="text" 
+                      placeholder="Search team..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="bg-transparent text-white placeholder-slate-650 focus:outline-none w-36"
+                    />
+                  </div>
+                  <button 
+                    onClick={openAddModal}
+                    className="faith-gradient faith-gradient-hover text-white font-bold py-2 px-6 rounded-full text-xs uppercase tracking-wider inline-flex items-center gap-1.5 shrink-0"
+                  >
+                    <Plus className="w-4 h-4" /> Add Team Member
+                  </button>
+                </div>
               </div>
 
               {/* Team list */}
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {team.map((member) => (
-                  <div key={member.id} className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden flex flex-col justify-between">
-                    <div className="relative aspect-[3/4] bg-slate-900">
-                      <Image src={member.image || "/images/img_page1_2.jpeg"} alt="" fill className="object-cover" />
+                {team
+                  .filter(member => 
+                    member.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    member.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    member.bio?.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((member) => (
+                    <div key={member.id} className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden flex flex-col justify-between">
+                      <div className="relative aspect-[3/4] bg-slate-900">
+                        <Image src={member.image || "/images/img_page1_2.jpeg"} alt="" fill className="object-cover" />
+                      </div>
+                      <div className="p-4 space-y-2">
+                        <h3 className="text-sm font-bold text-white">{member.name}</h3>
+                        <p className="text-[10px] text-secondary font-bold uppercase tracking-wider">{member.role}</p>
+                        <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">{member.bio}</p>
+                      </div>
+                      <div className="p-4 pt-0 border-t border-slate-900 flex gap-2 items-center justify-between">
+                        <button
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(`/api/admin/team`, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ id: member.id, published: !member.published })
+                              });
+                              if (res.ok) {
+                                await loadAllContent();
+                                showNotification("success", "Team member status updated live!");
+                              }
+                            } catch(e) {}
+                          }}
+                          className="focus:outline-none cursor-pointer"
+                        >
+                          {member.published ? (
+                            <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-[9px] uppercase tracking-wider">Published</span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400 font-semibold text-[9px] uppercase tracking-wider">Draft</span>
+                          )}
+                        </button>
+                        
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => openEditModal(member)}
+                            className="py-1 px-2.5 bg-slate-900 hover:bg-slate-855 rounded border border-slate-800 text-[10px] font-bold text-slate-355 text-center"
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            onClick={() => handleDelete("team", member.id)}
+                            className="px-2 py-1 bg-red-950/20 border border-red-900/10 hover:bg-red-500/10 rounded text-red-400 text-xs"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="p-4 space-y-2">
-                      <h3 className="text-sm font-bold text-white">{member.name}</h3>
-                      <p className="text-[10px] text-secondary font-bold uppercase tracking-wider">{member.role}</p>
-                      <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">{member.bio}</p>
-                    </div>
-                    <div className="p-4 pt-0 border-t border-slate-900 flex gap-2">
-                      <button 
-                        onClick={() => openEditModal(member)}
-                        className="flex-1 py-1 bg-slate-900 hover:bg-slate-850 rounded border border-slate-800 text-[10px] font-bold text-slate-350 text-center"
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        onClick={() => handleDelete("team", member.id)}
-                        className="px-2 py-1 bg-red-950/20 border border-red-900/10 hover:bg-red-500/10 rounded text-red-400 text-xs"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
 
             </div>
@@ -1093,41 +1455,83 @@ export default function AdminDashboardPage() {
             <div className="space-y-8 animate-fade-in bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
                 <div>
-                  <h2 className="text-xl font-bold font-serif uppercase tracking-wider text-white">Frequently Asked Questions</h2>
+                  <h2 className="text-xl font-bold font-serif uppercase tracking-wider text-white font-medium">Frequently Asked Questions</h2>
                   <p className="text-xs text-slate-500 mt-1">Manage the accordion items displayed in the public Info tab.</p>
                 </div>
-                <button 
-                  onClick={openAddModal}
-                  className="faith-gradient faith-gradient-hover text-white font-bold py-2 px-6 rounded-full text-xs uppercase tracking-wider inline-flex items-center gap-1.5"
-                >
-                  <Plus className="w-4 h-4" /> Add FAQ Item
-                </button>
+                
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 bg-slate-955 border border-slate-850 px-3 py-1.5 rounded-xl text-xs">
+                    <Search className="w-4 h-4 text-slate-500" />
+                    <input 
+                      type="text" 
+                      placeholder="Search FAQs..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="bg-transparent text-white placeholder-slate-650 focus:outline-none w-36"
+                    />
+                  </div>
+                  <button 
+                    onClick={openAddModal}
+                    className="faith-gradient faith-gradient-hover text-white font-bold py-2 px-6 rounded-full text-xs uppercase tracking-wider inline-flex items-center gap-1.5 shrink-0"
+                  >
+                    <Plus className="w-4 h-4" /> Add FAQ Item
+                  </button>
+                </div>
               </div>
 
               {/* list */}
               <div className="space-y-4">
-                {faqs.map((faq) => (
-                  <div key={faq.id} className="bg-slate-950 border border-slate-850 p-6 rounded-2xl flex justify-between items-start gap-4">
-                    <div className="space-y-2">
-                      <strong className="block text-white text-sm">Q: {faq.question}</strong>
-                      <p className="text-xs text-slate-400 leading-relaxed">A: {faq.answer}</p>
+                {faqs
+                  .filter(faq => 
+                    faq.question?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    faq.answer?.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((faq) => (
+                    <div key={faq.id} className="bg-slate-955 border border-slate-855 p-6 rounded-2xl flex justify-between items-start gap-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <strong className="block text-white text-sm">Q: {faq.question}</strong>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(`/api/admin/faqs`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ id: faq.id, published: !faq.published })
+                                });
+                                if (res.ok) {
+                                  await loadAllContent();
+                                  showNotification("success", "FAQ status updated live!");
+                                }
+                              } catch(e) {}
+                            }}
+                            className="focus:outline-none cursor-pointer ml-2"
+                          >
+                            {faq.published ? (
+                              <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-[9px] uppercase tracking-wider">Published</span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400 font-semibold text-[9px] uppercase tracking-wider">Draft</span>
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-xs text-slate-400 leading-relaxed">A: {faq.answer}</p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button 
+                          onClick={() => openEditModal(faq)}
+                          className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-355 border border-slate-850"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete("faq", faq.id)}
+                          className="p-1 rounded bg-red-950/20 border border-red-900/10 hover:bg-red-500/10 text-red-400"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex gap-2 shrink-0">
-                      <button 
-                        onClick={() => openEditModal(faq)}
-                        className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-350 border border-slate-850"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete("faq", faq.id)}
-                        className="p-1 rounded bg-red-950/20 border border-red-900/10 hover:bg-red-500/10 text-red-400"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
 
             </div>
@@ -1489,7 +1893,17 @@ export default function AdminDashboardPage() {
                       value={formData.summary || ""} 
                       onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
                       required
-                      className="w-full px-4 py-2 bg-slate-950 border border-slate-850 rounded-xl text-sm focus:outline-none"
+                      className="w-full px-4 py-2 bg-slate-955 border border-slate-850 rounded-xl text-sm focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Content (HTML allowed)</label>
+                    <textarea 
+                      rows={8}
+                      value={formData.content || ""} 
+                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                      required
+                      className="w-full px-4 py-2 bg-slate-955 border border-slate-850 rounded-xl text-sm focus:outline-none resize-none"
                     />
                   </div>
                   <div className="space-y-1">
@@ -1498,7 +1912,7 @@ export default function AdminDashboardPage() {
                       type="text" 
                       value={formData.coverImage || ""} 
                       onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-950 border border-slate-850 rounded-xl text-sm focus:outline-none"
+                      className="w-full px-4 py-2 bg-slate-955 border border-slate-850 rounded-xl text-sm focus:outline-none"
                     />
                   </div>
                   <div className="space-y-1">
@@ -1664,8 +2078,18 @@ export default function AdminDashboardPage() {
                       type="text" 
                       value={formData.coverImage || ""} 
                       onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-950 border border-slate-850 rounded-xl text-sm focus:outline-none"
+                      className="w-full px-4 py-2 bg-slate-955 border border-slate-850 rounded-xl text-sm focus:outline-none"
                     />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input 
+                      id="projectPublished"
+                      type="checkbox" 
+                      checked={formData.published !== false} 
+                      onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                      className="accent-primary"
+                    />
+                    <label htmlFor="projectPublished" className="text-xs text-slate-350 font-semibold select-none">Publish Immediately</label>
                   </div>
                 </>
               )}
@@ -1715,8 +2139,18 @@ export default function AdminDashboardPage() {
                       value={formData.content || ""} 
                       onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                       required
-                      className="w-full px-4 py-2 bg-slate-950 border border-slate-850 rounded-xl text-sm focus:outline-none resize-none"
+                      className="w-full px-4 py-2 bg-slate-955 border border-slate-850 rounded-xl text-sm focus:outline-none resize-none"
                     />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input 
+                      id="testimonialPublished"
+                      type="checkbox" 
+                      checked={formData.published !== false} 
+                      onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                      className="accent-primary"
+                    />
+                    <label htmlFor="testimonialPublished" className="text-xs text-slate-350 font-semibold select-none">Publish Immediately</label>
                   </div>
                 </>
               )}
@@ -1771,8 +2205,18 @@ export default function AdminDashboardPage() {
                       value={formData.bio || ""} 
                       onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                       required
-                      className="w-full px-4 py-2 bg-slate-950 border border-slate-850 rounded-xl text-sm focus:outline-none resize-none"
+                      className="w-full px-4 py-2 bg-slate-955 border border-slate-850 rounded-xl text-sm focus:outline-none resize-none"
                     />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input 
+                      id="teamPublished"
+                      type="checkbox" 
+                      checked={formData.published !== false} 
+                      onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                      className="accent-primary"
+                    />
+                    <label htmlFor="teamPublished" className="text-xs text-slate-350 font-semibold select-none">Publish Immediately</label>
                   </div>
                 </>
               )}
@@ -1797,8 +2241,18 @@ export default function AdminDashboardPage() {
                       value={formData.answer || ""} 
                       onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
                       required
-                      className="w-full px-4 py-2 bg-slate-950 border border-slate-850 rounded-xl text-sm focus:outline-none resize-none"
+                      className="w-full px-4 py-2 bg-slate-955 border border-slate-850 rounded-xl text-sm focus:outline-none resize-none"
                     />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input 
+                      id="faqPublished"
+                      type="checkbox" 
+                      checked={formData.published !== false} 
+                      onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                      className="accent-primary"
+                    />
+                    <label htmlFor="faqPublished" className="text-xs text-slate-350 font-semibold select-none">Publish Immediately</label>
                   </div>
                 </>
               )}

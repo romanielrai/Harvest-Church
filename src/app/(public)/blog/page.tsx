@@ -8,6 +8,7 @@ export const revalidate = 0; // Dynamic rendering
 
 export default async function BlogPage() {
   const posts = await prisma.blogPost.findMany({
+    where: { published: true },
     orderBy: { createdAt: "desc" },
     include: { category: true }
   });

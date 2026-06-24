@@ -1,9 +1,37 @@
 import React from "react";
 import Image from "next/image";
 import { Globe, Users, Anchor, HelpCircle, Heart, BookOpen, GraduationCap } from "lucide-react";
+import { prisma } from "@/lib/prisma";
 
-export default function MinistriesPage() {
-  const ministries = [
+export const revalidate = 0; // Dynamic rendering
+
+export default async function MinistriesPage() {
+  const dbMinistries = await prisma.ministry.findMany({
+    where: { active: true },
+    orderBy: { createdAt: "desc" }
+  });
+
+  const ICON_MAP: Record<string, any> = {
+    "Sharing Gospel": Globe,
+    "Training Church Leaders": GraduationCap,
+    "Planting Churches": Anchor,
+    "Helping Needy People": HelpCircle,
+    "Women's Training/Seminars": Users,
+    "Baptisms": Heart,
+    "Bible Stories Tellers Training": BookOpen,
+  };
+
+  const COLOR_MAP: Record<string, string> = {
+    "Sharing Gospel": "border-red-500/30 text-red-500 bg-red-500/5",
+    "Training Church Leaders": "border-amber-500/30 text-amber-500 bg-amber-500/5",
+    "Planting Churches": "border-blue-500/30 text-blue-500 bg-blue-500/5",
+    "Helping Needy People": "border-emerald-500/30 text-emerald-500 bg-emerald-500/5",
+    "Women's Training/Seminars": "border-purple-500/30 text-purple-500 bg-purple-500/5",
+    "Baptisms": "border-teal-500/30 text-teal-500 bg-teal-500/5",
+    "Bible Stories Tellers Training": "border-indigo-500/30 text-indigo-500 bg-indigo-500/5",
+  };
+
+  const fallbackMinistries = [
     {
       title: "Sharing Gospel",
       subtitle: "Outreach & Evangelism",
@@ -16,7 +44,8 @@ export default function MinistriesPage() {
       ],
       icon: Globe,
       color: "border-red-500/30 text-red-500 bg-red-500/5",
-      images: ["/images/img_page2_1.jpeg", "/images/img_page2_3.jpeg", "/images/img_page2_7.jpeg"]
+      images: ["/images/img_page2_1.jpeg", "/images/img_page2_3.jpeg", "/images/img_page2_7.jpeg"],
+      slug: "sharing-gospel"
     },
     {
       title: "Training Church Leaders",
@@ -29,12 +58,13 @@ export default function MinistriesPage() {
       ],
       icon: GraduationCap,
       color: "border-amber-500/30 text-amber-500 bg-amber-500/5",
-      images: ["/images/img_page3_1.jpeg", "/images/img_page3_3.jpeg", "/images/img_page3_5.jpeg"]
+      images: ["/images/img_page3_1.jpeg", "/images/img_page3_3.jpeg", "/images/img_page3_5.jpeg"],
+      slug: "training-church-leaders"
     },
     {
       title: "Planting Churches",
       subtitle: "District Fellowships",
-      description: "Our long-term vision is to plant biblically-sound churches in every single one of the 77 districts of Nepal. So far, the Lord has enabled us to establish 6 active branches / daughter churches in different districts.",
+      description: "Our long-term vision is to plant biblically-sound churches in every single one of the 77 districts of Nepal. So far, the Lord has enabled us to establish 6 active branches / daughter fellowships in different districts.",
       details: [
         "Indigenous Shepherds: Matching newly planted fellowships with trained local pastors.",
         "Meeting Spaces: Supporting the construction of simple community prayer halls.",
@@ -42,7 +72,8 @@ export default function MinistriesPage() {
       ],
       icon: Anchor,
       color: "border-blue-500/30 text-blue-500 bg-blue-500/5",
-      images: ["/images/img_page3_7.jpeg", "/images/img_page3_8.jpeg", "/images/img_page3_11.jpeg"]
+      images: ["/images/img_page3_7.jpeg", "/images/img_page3_8.jpeg", "/images/img_page3_11.jpeg"],
+      slug: "planting-churches"
     },
     {
       title: "Helping Needy People",
@@ -55,12 +86,13 @@ export default function MinistriesPage() {
       ],
       icon: HelpCircle,
       color: "border-emerald-500/30 text-emerald-500 bg-emerald-500/5",
-      images: ["/images/img_page4_1.jpeg", "/images/img_page4_5.jpeg", "/images/img_page4_6.jpeg"]
+      images: ["/images/img_page4_1.jpeg", "/images/img_page4_5.jpeg", "/images/img_page4_6.jpeg"],
+      slug: "helping-needy-people"
     },
     {
       title: "Women's Training/Seminars",
       subtitle: "Empowerment & Family Care",
-      description: "Led by Pastor Gita Karki, this ministry provides specialized teaching and encouragement for women leaders of different churches. In Nepal, there are very few female teachers to train women leaders. This ministry bridges that critical gap.",
+      description: "Led by Pastor Gita Karki, this ministry provides specialized teaching and encouragement for women leaders of different fellowships. In Nepal, there are very few female teachers to train women leaders. This ministry bridges that critical gap.",
       details: [
         "Role of Ladies in Ministry: Discipleship and teaching strategies for women leaders.",
         "Husband & Family Support: Seminars on how to support spouses in ministry and raise children with biblical values.",
@@ -68,7 +100,8 @@ export default function MinistriesPage() {
       ],
       icon: Users,
       color: "border-purple-500/30 text-purple-500 bg-purple-500/5",
-      images: ["/images/img_page5_1.jpeg", "/images/img_page5_3.jpeg", "/images/img_page5_8.jpeg"]
+      images: ["/images/img_page5_1.jpeg", "/images/img_page5_3.jpeg", "/images/img_page5_8.jpeg"],
+      slug: "womens-training-seminars"
     },
     {
       title: "Baptisms",
@@ -81,7 +114,8 @@ export default function MinistriesPage() {
       ],
       icon: Heart,
       color: "border-teal-500/30 text-teal-500 bg-teal-500/5",
-      images: ["/images/img_page6_1.jpeg", "/images/img_page6_4.jpeg", "/images/img_page6_7.jpeg"]
+      images: ["/images/img_page6_1.jpeg", "/images/img_page6_4.jpeg", "/images/img_page6_7.jpeg"],
+      slug: "baptisms"
     },
     {
       title: "Bible Stories Tellers Training",
@@ -94,9 +128,56 @@ export default function MinistriesPage() {
       ],
       icon: BookOpen,
       color: "border-indigo-500/30 text-indigo-500 bg-indigo-500/5",
-      images: ["/images/img_page7_1.jpeg", "/images/img_page7_8.jpeg", "/images/img_page7_11.jpeg"]
+      images: ["/images/img_page7_1.jpeg", "/images/img_page7_8.jpeg", "/images/img_page7_11.jpeg"],
+      slug: "bible-stories-tellers-training"
     }
   ];
+
+  const displayMinistries = dbMinistries.length > 0 ? dbMinistries.map(m => {
+    let details: string[] = [];
+    if (m.reports) {
+      try {
+        const parsed = JSON.parse(m.reports);
+        if (Array.isArray(parsed)) {
+          details = parsed.map((r: any) => typeof r === "string" ? r : r.title || r.name || "");
+        }
+      } catch(e) {}
+    }
+    if (details.length === 0) {
+      details = [
+        `Focus category: ${m.category}`,
+        `Actively working in various districts of Nepal.`,
+        `Managed and driven by local church teams.`
+      ];
+    }
+
+    let images = ["/images/img_page1_1.jpeg", "/images/img_page1_2.jpeg", "/images/img_page1_3.jpeg"];
+    if (m.gallery) {
+      try {
+        const parsed = JSON.parse(m.gallery);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          images = parsed.slice(0, 3).map((imgUrl: string) => imgUrl || "/images/img_page1_1.jpeg");
+          while (images.length < 3) {
+            images.push(m.coverImage || "/images/img_page1_1.jpeg");
+          }
+        }
+      } catch(e) {}
+    } else if (m.coverImage) {
+      images = [m.coverImage, m.coverImage, m.coverImage];
+    }
+
+    return {
+      id: m.id,
+      title: m.title,
+      slug: m.slug,
+      subtitle: m.category,
+      description: m.description,
+      details,
+      icon: ICON_MAP[m.title] || Anchor,
+      color: COLOR_MAP[m.title] || "border-primary/30 text-primary bg-primary/5",
+      images
+    };
+  }) : fallbackMinistries;
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 py-16">
@@ -106,20 +187,21 @@ export default function MinistriesPage() {
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <span className="text-xs uppercase tracking-widest text-primary font-bold">What We Do</span>
           <h1 className="text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white leading-tight">
-            Our 7 Core Ministry Activities
+            Our Core Ministry Activities
           </h1>
           <p className="text-lg text-slate-500 dark:text-slate-400 font-light leading-relaxed">
-            By the grace of God, we serve remote and poor districts in Nepal. Explore the 7 pillars of our outreach, training, and community relief efforts.
+            By the grace of God, we serve remote and poor districts in Nepal. Explore the pillars of our outreach, leadership training, and community relief efforts.
           </p>
         </div>
 
         {/* Ministries List */}
         <div className="space-y-24">
-          {ministries.map((min, index) => {
+          {displayMinistries.map((min, index) => {
             const Icon = min.icon;
             return (
               <div 
-                key={index} 
+                key={min.id || index}
+                id={min.slug || ""}
                 className={`grid lg:grid-cols-12 gap-12 items-center border-t border-slate-200 dark:border-slate-800 pt-16 ${
                   index % 2 === 1 ? "lg:flex-row-reverse" : ""
                 }`}

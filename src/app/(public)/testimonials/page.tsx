@@ -8,6 +8,7 @@ export const revalidate = 0; // Dynamic rendering
 
 export default async function TestimonialsPage() {
   const testimonials = await prisma.testimonial.findMany({
+    where: { published: true },
     orderBy: { createdAt: "desc" }
   });
 

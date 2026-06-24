@@ -49,6 +49,7 @@ model Project {
   gallery       String? // JSON array of photo URLs
   reports       String? // JSON array of report URLs/names
   documents     String? // JSON array of document references
+  published     Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -226,6 +227,7 @@ model Testimonial {
   category   String // VOLUNTEER, COMMUNITY, SPONSOR
   videoUrl   String?
   avatarUrl  String?
+  published  Boolean  @default(true)
   createdAt  DateTime @default(now())
 }
 
@@ -298,6 +300,7 @@ model Faq {
   id        String   @id @default(uuid())
   question  String
   answer    String
+  published Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -309,6 +312,7 @@ model TeamMember {
   bio       String
   image     String   @default("/images/img_page1_2.jpeg")
   order     Int      @default(0)
+  published Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
