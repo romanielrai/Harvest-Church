@@ -624,16 +624,19 @@ export default function AdminDashboardPage() {
                   
                   {/* Visual simulated bar chart */}
                   <div className="h-64 flex items-end justify-between gap-4 pt-6 border-b border-slate-800 pb-1">
-                    {analytics.monthlyStats.map((stat: any, idx: number) => (
-                      <div key={idx} className="flex-1 flex flex-col items-center gap-2 group cursor-pointer">
-                        <span className="text-[10px] font-bold text-slate-500 group-hover:text-primary transition-colors">NPR {stat.donations}</span>
-                        <div 
-                          className="w-full bg-slate-800 group-hover:bg-primary rounded-t-lg transition-all" 
-                          style={{ height: `${(stat.donations / 45000) * 160}px` }}
-                        />
-                        <span className="text-xs font-bold text-slate-400">{stat.month}</span>
-                      </div>
-                    ))}
+                    {(() => {
+                      const maxDonations = Math.max(...analytics.monthlyStats.map((s: any) => s.donations), 1);
+                      return analytics.monthlyStats.map((stat: any, idx: number) => (
+                        <div key={idx} className="flex-1 flex flex-col items-center gap-2 group cursor-pointer">
+                          <span className="text-[10px] font-bold text-slate-500 group-hover:text-primary transition-colors">NPR {stat.donations}</span>
+                          <div 
+                            className="w-full bg-slate-800 group-hover:bg-primary rounded-t-lg transition-all" 
+                            style={{ height: `${(stat.donations / maxDonations) * 160}px` }}
+                          />
+                          <span className="text-xs font-bold text-slate-400">{stat.month}</span>
+                        </div>
+                      ));
+                    })()}
                   </div>
                 </div>
 
