@@ -3,6 +3,9 @@ import { Mail, Phone, MapPin, MessageCircle } from "lucide-react";
 import ContactForm from "./ContactForm";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function ContactPage() {
   const settings = await prisma.systemSettings.findFirst();
   

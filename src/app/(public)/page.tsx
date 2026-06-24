@@ -3,6 +3,9 @@ import React from 'react';
 import HomepageClient from './HomepageClient';
 import { Metadata } from 'next';
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // Dynamic SEO metadata based on administrator system settings
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await prisma.systemSettings.findFirst();
