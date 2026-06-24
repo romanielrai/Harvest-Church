@@ -1621,94 +1621,186 @@ export default function AdminDashboardPage() {
 
           {/* K. WEBSITE SETTINGS */}
           {activeTab === "settings" && (
-            <div className="space-y-8 animate-fade-in bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-2xl">
+            <div className="space-y-8 animate-fade-in bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-4xl">
               
               <div className="border-b border-slate-800 pb-4">
                 <h2 className="text-xl font-bold font-serif uppercase tracking-wider text-white">General Configurations</h2>
-                <p className="text-xs text-slate-500 mt-1">Manage global title, logos, contacts, and social media references.</p>
+                <p className="text-xs text-slate-500 mt-1">Manage global details, logos, contacts, social media, and core faith/about content.</p>
               </div>
 
               <form onSubmit={handleSettingsSave} className="space-y-6">
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Ministry Name</label>
-                    <input 
-                      type="text" 
-                      value={settings.ministryName || ""}
-                      onChange={(e) => setSettings({ ...settings, ministryName: e.target.value })}
-                      required
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  
+                  {/* Left Column: General & Contacts */}
+                  <div className="space-y-6">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary border-b border-slate-800 pb-2">Contacts & Branding</h3>
+                    
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Ministry Name</label>
+                      <input 
+                        type="text" 
+                        value={settings.ministryName || ""}
+                        onChange={(e) => setSettings({ ...settings, ministryName: e.target.value })}
+                        required
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                      />
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Logo Image URL</label>
+                      <input 
+                        type="text" 
+                        value={settings.logoUrl || ""}
+                        onChange={(e) => setSettings({ ...settings, logoUrl: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Contact Email</label>
+                      <input 
+                        type="email" 
+                        value={settings.email || ""}
+                        onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                        required
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Contact Phone</label>
+                      <input 
+                        type="text" 
+                        value={settings.phone || ""}
+                        onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                        required
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">WhatsApp Number</label>
+                      <input 
+                        type="text" 
+                        value={settings.whatsappNumber || ""}
+                        onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                        placeholder="+9779800000000"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Contact Address</label>
+                      <input 
+                        type="text" 
+                        value={settings.address || ""}
+                        onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+                        required
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Contact Email</label>
-                    <input 
-                      type="email" 
-                      value={settings.email || ""}
-                      onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                      required
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                    />
+
+                  {/* Right Column: Social Networks */}
+                  <div className="space-y-6">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary border-b border-slate-800 pb-2">Social Channels</h3>
+                    
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Facebook URL</label>
+                      <input 
+                        type="text" 
+                        value={settings.facebookUrl || ""}
+                        onChange={(e) => setSettings({ ...settings, facebookUrl: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Twitter / X URL</label>
+                      <input 
+                        type="text" 
+                        value={settings.twitterUrl || ""}
+                        onChange={(e) => setSettings({ ...settings, twitterUrl: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Instagram URL</label>
+                      <input 
+                        type="text" 
+                        value={settings.instagramUrl || ""}
+                        onChange={(e) => setSettings({ ...settings, instagramUrl: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Contact Phone</label>
-                    <input 
-                      type="text" 
-                      value={settings.phone || ""}
-                      onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                      required
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                    />
+
+                  {/* About Content & Beliefs Textareas (Full Width) */}
+                  <div className="md:col-span-2 space-y-6 pt-4 border-t border-slate-800">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary border-b border-slate-800 pb-2">Ministry Beliefs & About Page Content</h3>
+                    
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">About Summary Text (Footer / Home)</label>
+                      <textarea 
+                        value={settings.aboutText || ""}
+                        onChange={(e) => setSettings({ ...settings, aboutText: e.target.value })}
+                        rows={3}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                        placeholder="Brief summary of the ministry's mission..."
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Our Mission (meet needs)</label>
+                        <textarea 
+                          value={settings.mission || ""}
+                          onChange={(e) => setSettings({ ...settings, mission: e.target.value })}
+                          rows={4}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                          placeholder="Mission statement on meeting physical & spiritual needs..."
+                        />
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Our Vision (planting & training)</label>
+                        <textarea 
+                          value={settings.vision || ""}
+                          onChange={(e) => setSettings({ ...settings, vision: e.target.value })}
+                          rows={4}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                          placeholder="Vision statement on church planting & pastoral training..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Statement of Faith</label>
+                      <textarea 
+                        value={settings.statementOfFaith || ""}
+                        onChange={(e) => setSettings({ ...settings, statementOfFaith: e.target.value })}
+                        rows={5}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                        placeholder="Detail the core Statement of Faith points..."
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Ministry History & Timeline Story</label>
+                      <textarea 
+                        value={settings.history || ""}
+                        onChange={(e) => setSettings({ ...settings, history: e.target.value })}
+                        rows={6}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                        placeholder="Detail the timeline, journey, and story of Harvest Church..."
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Contact Address</label>
-                    <input 
-                      type="text" 
-                      value={settings.address || ""}
-                      onChange={(e) => setSettings({ ...settings, address: e.target.value })}
-                      required
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                    />
-                  </div>
-                  <div className="space-y-1 col-span-2">
-                    <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Facebook URL</label>
-                    <input 
-                      type="text" 
-                      value={settings.facebookUrl || ""}
-                      onChange={(e) => setSettings({ ...settings, facebookUrl: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                    />
-                  </div>
-                  <div className="space-y-1 col-span-2">
-                    <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Twitter / X URL</label>
-                    <input 
-                      type="text" 
-                      value={settings.twitterUrl || ""}
-                      onChange={(e) => setSettings({ ...settings, twitterUrl: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                    />
-                  </div>
-                  <div className="space-y-1 col-span-2">
-                    <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Instagram URL</label>
-                    <input 
-                      type="text" 
-                      value={settings.instagramUrl || ""}
-                      onChange={(e) => setSettings({ ...settings, instagramUrl: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                    />
-                  </div>
-                  <div className="space-y-1 col-span-2">
-                    <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Logo Image URL</label>
-                    <input 
-                      type="text" 
-                      value={settings.logoUrl || ""}
-                      onChange={(e) => setSettings({ ...settings, logoUrl: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                    />
-                  </div>
+
                 </div>
 
-                <div className="pt-4 flex justify-end">
+                <div className="pt-4 flex justify-end border-t border-slate-800">
                   <button 
                     type="submit" 
                     disabled={submitting}
