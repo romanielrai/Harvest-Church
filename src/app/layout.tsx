@@ -4,6 +4,8 @@ import "./globals.css";
 import AuthProvider from "@/components/shared/AuthProvider";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export async function generateMetadata(): Promise<Metadata> {
